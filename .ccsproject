@@ -15,4 +15,5 @@
 	<templateProperties value="id=blinky.projectspec.blinky,buildProfile=release"/>
 	<origin value="/Applications/TI/lib/cc3200sdk_1.5.0/cc3200-sdk/example/blinky/ccs/blinky.projectspec"/>
 	<filesToOpen value=""/>
+	<isTargetManual value="false"/>
 </projectOptions>
