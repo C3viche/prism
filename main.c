@@ -35,9 +35,8 @@ extern uVectorEntry __vector_table;
 #endif
 
 //*****************************************************************************
-//                      LOCAL FUNCTION PROTOTYPES                           
+//                      LOCAL FUNCTION PROTOTYPES
 //*****************************************************************************
-static void LEDBinaryCounter();
 static void BoardInit(void);
 
 
@@ -75,7 +74,7 @@ BoardInit(void)
     MAP_IntVTableBaseSet((unsigned long)&__vector_table);
 #endif
 #endif
-    
+
     //
     // Enable Processor
     //
@@ -92,7 +91,7 @@ main()
 {
     // Initialize Board configurations
     BoardInit();
-    
+
     // Power on the pinmux configurations
     PinMuxConfig();
 
@@ -109,4 +108,3 @@ main()
     }
     return 0;
 }
-
