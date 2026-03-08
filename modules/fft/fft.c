@@ -18,6 +18,7 @@ InitFFT(void) {
 
     if (status != ARM_MATH_SUCCESS) {
         // Handle initialization error (usually means an unsupported FFT_SIZE)
+        printf("Initialization error. FFT_SIZE may be unsupported.");
         while(1);
     }
 
