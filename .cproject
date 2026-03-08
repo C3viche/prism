@@ -134,7 +134,7 @@
 						</toolChain>
 					</folderInfo>
 					<sourceEntries>
-						<entry excluding="samples|CMSIS_DSP/Source/TransformFunctions/TransformFunctionsF16.c|CMSIS_DSP/Source/TransformFunctions/TransformFunctions.c|CMSIS_DSP/Source/ComplexMathFunctions/ComplexMathFunctionsF16.c|CMSIS_DSP/Source/ComplexMathFunctions/ComplexMathFunctions.c|CMSIS_DSP/Source/CommonTables/CommonTablesF16.c|CMSIS_DSP/Source/CommonTables/CommonTables.c|CMSIS_DSP/Source/BasicMathFunctions/BasicMathFunctionsF16.c|CMSIS_DSP/Source/BasicMathFunctions/BasicMathFunctions.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
+						<entry excluding="CMSIS_DSP/Source/FastMathFunctions/FastMathFunctionsF16.c|CMSIS_DSP/Source/FastMathFunctions/FastMathFunctions.c|samples|CMSIS_DSP/Source/TransformFunctions/TransformFunctionsF16.c|CMSIS_DSP/Source/TransformFunctions/TransformFunctions.c|CMSIS_DSP/Source/ComplexMathFunctions/ComplexMathFunctionsF16.c|CMSIS_DSP/Source/ComplexMathFunctions/ComplexMathFunctions.c|CMSIS_DSP/Source/CommonTables/CommonTablesF16.c|CMSIS_DSP/Source/CommonTables/CommonTables.c|CMSIS_DSP/Source/BasicMathFunctions/BasicMathFunctionsF16.c|CMSIS_DSP/Source/BasicMathFunctions/BasicMathFunctions.c" flags="VALUE_WORKSPACE_PATH|RESOLVED" kind="sourcePath" name=""/>
 					</sourceEntries>
 				</configuration>
 			</storageModule>

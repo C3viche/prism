@@ -6,6 +6,7 @@
  */
 
 #include "fft.h"
+#include "../prism_utils.h"
 
 
 
@@ -23,14 +24,14 @@ InitFFT(void) {
 }
 
 void
-ProcessAudioFrame(void) {
+ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2]) {
     // Prepare the microphone data for FFT to silence
 
     // Remove the DC Offset. If your ADC idles at 2048 (half of a 12-bit range),
-    // subtract 2048 from every sample. For now we will just set to 0
+    // subtract 2048 from every sample.
     int i;
     for (i = 0; i < FFT_SIZE; i++) {
-        audio_input[i] = 0; // silence = 0
+        audio_input[i] = audio_input[i] - ADC_DC_OFFSET; // silence = ADC_DC_OFFSET (2048)
     }
 
     // Run FFT algorithm from CMSIS_DSP
@@ -43,7 +44,7 @@ ProcessAudioFrame(void) {
     // of a Real FFT is just a mirror image of the first half.
     arm_cmplx_mag_q15(fft_output, frequency_magnitudes, FFT_SIZE / 2);
 
-    // TODO: recalculate ranges based on ADC sampling rate
+    // TODO: recalculate ranges based on ADC sampling rate (probably 16 kHz to 20 kHz)
     // frequency_magnitudes[0] is 0Hz (DC) noise. Ignore it.
     // frequency_magnitudes[1] up to ~10 might be heavy bass frequencies.
     // frequency_magnitudes[200+] could be high treble.
@@ -56,8 +57,10 @@ ProcessAudioFrame(void) {
 
 static void
 ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
+    frequency_magnitudes[0] = 0;
+
     int i;
-    for(i = 0; i < FFT_SIZE / 2; i++) {
+    for(i = 1; i < FFT_SIZE / 2; i++) {
         q15_t mag = frequency_magnitudes[i];
         q15_t scaled_mag = mag * OLED_SCALE;
 

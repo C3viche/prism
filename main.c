@@ -24,6 +24,9 @@
 
 #define APPLICATION_VERSION     "1.4.0"
 
+// Custom Prism module includes
+#include "modules/fft/fft.h"
+
 //*****************************************************************************
 //                 GLOBAL VARIABLES
 //*****************************************************************************
@@ -33,6 +36,11 @@ extern void (* const g_pfnVectors[])(void);
 #if defined(ewarm)
 extern uVectorEntry __vector_table;
 #endif
+
+q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
+q15_t audio_input[FFT_SIZE];             // Raw ADC microphone readings
+
+
 
 //*****************************************************************************
 //                      LOCAL FUNCTION PROTOTYPES
@@ -95,8 +103,12 @@ main()
     // Power on the pinmux configurations
     PinMuxConfig();
 
+    // Init fft
+    InitFFT();
+
     InitTerm();
     ClearTerm();
+
 
     // Display banner and usage message
     DisplayBanner();
