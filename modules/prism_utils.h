@@ -15,6 +15,6 @@
 #define MAX_ADC_VALUE ((1 << 12) - 1)
 #define ADC_DC_OFFSET (1 << 11)
 
-
+#define FFT_SIZE        512
 
 #endif /* MODULES_PRISM_UTILS_H_ */
