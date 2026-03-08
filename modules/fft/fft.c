@@ -6,9 +6,8 @@
  */
 
 #include "fft.h"
-#include "../prism_utils.h"
 
-
+#include "dsp/dsp_filtering.h"
 
 // Initialize the FFT instance.
 void
@@ -50,7 +49,11 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
     // frequency_magnitudes[1] up to ~10 might be heavy bass frequencies.
     // frequency_magnitudes[200+] could be high treble.
 
+    // Apply the dsp filtering to smoothen out sound ranges
+    ApplyDSPFilters(frequency_magnitudes, FFT_SIZE);
+
     // TODO: Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
+
     ScaleMagnitudes(frequency_magnitudes);
 
     // TODO: Update the OLED screen in after frequency binning
@@ -58,8 +61,6 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
 
 static void
 ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
-    frequency_magnitudes[0] = 0;
-
     int i;
     for(i = 1; i < FFT_SIZE / 2; i++) {
         q15_t mag = frequency_magnitudes[i];
