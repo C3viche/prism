@@ -8,6 +8,7 @@
 #include "fft.h"
 
 
+
 // Initialize the FFT instance.
 void
 InitFFT(void) {
@@ -47,7 +48,27 @@ ProcessAudioFrame(void) {
     // frequency_magnitudes[1] up to ~10 might be heavy bass frequencies.
     // frequency_magnitudes[200+] could be high treble.
 
-//    update_oled_and_leds(frequency_magnitudes);
+    // TODO: Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
+    ScaleMagnitudes(frequency_magnitudes);
+
+    // TODO: Update the OLED screen in after frequency binning
+}
+
+static void
+ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
+    int i;
+    for(i = 0; i < FFT_SIZE / 2; i++) {
+        q15_t mag = frequency_magnitudes[i];
+        q15_t scaled_mag = mag * OLED_SCALE;
+
+        // Scale the magnitude with a cap of the arbitrary maximum
+        scaled_mag = scaled_mag < MAX_MAGNITUDE ? scaled_mag : MAX_MAGNITUDE;
+
+        // Normalize to OLED dimensions
+        scaled_mag = (scaled_mag * OLED_DIM) / MAX_MAGNITUDE;
+
+        frequency_magnitudes[i] = scaled_mag;
+    }
 }
 
 

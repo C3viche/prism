@@ -11,10 +11,12 @@
 #include "../../CMSIS_DSP/Include/arm_math.h"
 
 // 512 sample audio buffer (can be modified later)
-#define FFT_SIZE 512
+#define FFT_SIZE        512
+#define MAX_MAGNITUDE   200
 
 // Scale factor to increase magnitudes to a height that makes sense for the oled pixels
 #define OLED_SCALE 2
+#define OLED_DIM   128
 
 // Declare the FFT Instance structure
 arm_rfft_instance_q15 fft_instance;
