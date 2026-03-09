@@ -9,6 +9,12 @@
 
 #include "dsp/dsp_filtering.h"
 
+// Declare the FFT Instance structure
+static arm_rfft_instance_q15 fft_instance;
+
+// Allocate the arrays (q15_t is just a standard int16_t)
+static q15_t fft_output[FFT_SIZE * 2];          // FFT output (Real + Imaginary pairs, that's why it's double)
+
 // Initialize the FFT instance.
 void
 InitFFT(void) {
@@ -49,8 +55,8 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
     // frequency_magnitudes[1] up to ~10 might be heavy bass frequencies.
     // frequency_magnitudes[200+] could be high treble.
 
-    // Apply the dsp filtering to smoothen out sound ranges
-    ApplyDSPFilters(frequency_magnitudes, FFT_SIZE);
+    // Apply the DSP filtering to smoothen out sound ranges
+    ApplyDSPFilters(frequency_magnitudes, FFT_SIZE / 2);
 
     // TODO: Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
     ScaleMagnitudes(frequency_magnitudes);
@@ -61,16 +67,19 @@ static void
 ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
     int i;
     for(i = 1; i < FFT_SIZE / 2; i++) {
-        q15_t mag = frequency_magnitudes[i];
-        q15_t scaled_mag = mag * OLED_SCALE;
+        // Use a 32-bit integer for the dangerous magnitude multiplication
+        int32_t raw_mag = frequency_magnitudes[i];
+        int32_t scaled_mag = raw_mag * OLED_SCALE;
 
-        // Scale the magnitude with a cap of the arbitrary maximum
-        scaled_mag = scaled_mag < MAX_MAGNITUDE ? scaled_mag : MAX_MAGNITUDE;
+        // Cap it BEFORE it has a chance to overflow the final calculation
+        if (scaled_mag > MAX_MAGNITUDE) {
+            scaled_mag = MAX_MAGNITUDE;
+        }
 
         // Normalize to OLED dimensions
         scaled_mag = (scaled_mag * OLED_DIM) / MAX_MAGNITUDE;
 
-        frequency_magnitudes[i] = scaled_mag;
+        frequency_magnitudes[i] = (q15_t)scaled_mag;
     }
 }
 

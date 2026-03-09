@@ -40,7 +40,7 @@ extern uVectorEntry __vector_table;
 #endif
 
 q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
-q15_t audio_input[FFT_SIZE];             // Raw ADC microphone readings
+q15_t audio_inputs[FFT_SIZE];            // Raw ADC microphone readings
 
 volatile uint16_t sample_index = 0;   // Keeps track of where we are in the audio inputs array for timer interrupts
 volatile uint8_t frame_ready = false;     // The flag
@@ -119,11 +119,10 @@ main()
 
     // Set up the bars and peaks here before the loop
     uint8_t num_bars = 3;
-    q15_t bin_peaks[num_bars] = {0};
+    q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
     while(1)
     {
-        q15_t audio_inputs[FFT_SIZE] = {0}; // Record audio samples here
 
         if (frame_ready) {
 

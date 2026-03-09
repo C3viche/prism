@@ -31,8 +31,6 @@
 #define MIN_BIN_INDEX 1.0f // skips 0 Hz noise
 
 // Shared functions
-
 void BinPeaks(q15_t frequency_magnitudes[FFT_SIZE / 2], uint8_t num_bars, q15_t* bin_peaks);
-static void CalculateBinCutoffs(uint8_t num_bars);
 
 #endif /* MODULES_BINNING_BINNING_H_ */
