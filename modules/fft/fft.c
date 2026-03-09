@@ -29,6 +29,27 @@ InitFFT(void) {
 
 }
 
+// Scale the magnitudes to a reasonable "height" for the oled
+static void
+ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
+    int i;
+    for(i = 1; i < FFT_SIZE / 2; i++) {
+        // Use a 32-bit integer for the dangerous magnitude multiplication
+        int32_t raw_mag = frequency_magnitudes[i];
+        int32_t scaled_mag = raw_mag * OLED_SCALE;
+
+        // Cap it BEFORE it has a chance to overflow the final calculation
+        if (scaled_mag > MAX_MAGNITUDE) {
+            scaled_mag = MAX_MAGNITUDE;
+        }
+
+        // Normalize to OLED dimensions
+        scaled_mag = (scaled_mag * OLED_DIM) / MAX_MAGNITUDE;
+
+        frequency_magnitudes[i] = (q15_t)scaled_mag;
+    }
+}
+
 void
 ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2]) {
     // Prepare the microphone data for FFT to silence
@@ -61,26 +82,6 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
     // TODO: Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
     ScaleMagnitudes(frequency_magnitudes);
 
-}
-
-static void
-ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
-    int i;
-    for(i = 1; i < FFT_SIZE / 2; i++) {
-        // Use a 32-bit integer for the dangerous magnitude multiplication
-        int32_t raw_mag = frequency_magnitudes[i];
-        int32_t scaled_mag = raw_mag * OLED_SCALE;
-
-        // Cap it BEFORE it has a chance to overflow the final calculation
-        if (scaled_mag > MAX_MAGNITUDE) {
-            scaled_mag = MAX_MAGNITUDE;
-        }
-
-        // Normalize to OLED dimensions
-        scaled_mag = (scaled_mag * OLED_DIM) / MAX_MAGNITUDE;
-
-        frequency_magnitudes[i] = (q15_t)scaled_mag;
-    }
 }
 
 

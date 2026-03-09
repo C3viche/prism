@@ -10,6 +10,35 @@
 static uint16_t bin_cutoffs[MAX_POSSIBLE_BARS + 1] = {0};
 static uint8_t initialized_bars = 0;
 
+// Calculate an array of bin cutoff indexes
+static void
+CalculateBinCutoffs(uint8_t num_bars) {
+
+    // Prevent dividing by zero or going out of bounds
+    if (num_bars == 0 || num_bars > MAX_POSSIBLE_BARS) {
+        printf("Error: Number of bars specified is out of bounds.\n");
+        return;
+    }
+
+    // Calculate the total logarithmic range ratio
+    float ratio = MAX_BIN_INDEX / MIN_BIN_INDEX;
+
+    // Generate the cutoffs and space them logarithmically
+    int i;
+    for (i = 0; i <= num_bars; i++) {
+        // Calculate the exact float value
+        float exact_cutoff = MIN_BIN_INDEX * powf(ratio, (float)i / (float)num_bars);
+
+        // Round it to the nearest integer index and store it
+        bin_cutoffs[i] = (uint16_t)roundf(exact_cutoff);
+    }
+
+    // Save this so we know we've already done the math for this size
+    initialized_bars = num_bars;
+
+}
+
+// Populate the `bin_peaks` array
 void
 BinPeaks(q15_t* frequency_magnitudes, uint8_t num_bars, q15_t* bin_peaks) {
 
@@ -39,31 +68,7 @@ BinPeaks(q15_t* frequency_magnitudes, uint8_t num_bars, q15_t* bin_peaks) {
     }
 }
 
-static void
-CalculateBinCutoffs(uint8_t num_bars) {
 
-    // Prevent dividing by zero or going out of bounds
-    if (num_bars == 0 || num_bars > MAX_POSSIBLE_BARS) {
-        printf("Error: Number of bars specified is out of bounds.\n");
-        return;
-    }
-
-    // Calculate the total logarithmic range ratio
-    float ratio = MAX_BIN_INDEX / MIN_BIN_INDEX;
-
-    // Generate the cutoffs and space them logarithmically
-    for (int i = 0; i <= num_bars; i++) {
-        // Calculate the exact float value
-        float exact_cutoff = MIN_BIN_INDEX * powf(ratio, (float)i / (float)num_bars);
-
-        // Round it to the nearest integer index and store it
-        bin_cutoffs[i] = (uint16_t)roundf(exact_cutoff);
-    }
-
-    // Save this so we know we've already done the math for this size
-    initialized_bars = num_bars;
-
-}
 
 //for (int bar = 0; bar < current_num_bars; bar++) {
 //

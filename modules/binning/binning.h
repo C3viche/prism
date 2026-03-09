@@ -9,7 +9,9 @@
 #define MODULES_BINNING_BINNING_H_
 
 #include <math.h>
+#include <stdint.h>
 #include "prism_utils.h"
+#include "arm_math.h"
 
 // BASS: 20 - 200 HZ
 // MID:  200 - 2000 HZ
