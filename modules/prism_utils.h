@@ -17,4 +17,6 @@
 
 #define FFT_SIZE        512
 
+#define ADC_SAMPLE_RATE 16000
+
 #endif /* MODULES_PRISM_UTILS_H_ */

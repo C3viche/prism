@@ -29,7 +29,7 @@ ApplyDSPFilters(q15_t* current_magnitudes, uint16_t size) {
         // If the new beat is quieter, slowly let the old bar fall down (Gravity)
         else {
             // Subtract a fraction of its own height to make it fall.
-            previous_magnitudes[i] = previous_magnitudes[i] - (previous_magnitudes[i] >> 2);
+            previous_magnitudes[i] = previous_magnitudes[i] - (previous_magnitudes[i] >> GRAVITY_SHIFT);
 
             // Overwrite the current frame with the smoothed falling value
             current_magnitudes[i] = previous_magnitudes[i];
