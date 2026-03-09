@@ -25,7 +25,9 @@
 #define APPLICATION_VERSION     "1.4.0"
 
 // Custom Prism module includes
-#include "modules/fft/fft.h"
+#include "fft/fft.h"
+#include "binning/binning.h"
+#include <stdbool.h>
 
 //*****************************************************************************
 //                 GLOBAL VARIABLES
@@ -40,7 +42,8 @@ extern uVectorEntry __vector_table;
 q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
 q15_t audio_input[FFT_SIZE];             // Raw ADC microphone readings
 
-
+volatile uint16_t sample_index = 0;   // Keeps track of where we are in the audio inputs array for timer interrupts
+volatile uint8_t frame_ready = false;     // The flag
 
 //*****************************************************************************
 //                      LOCAL FUNCTION PROTOTYPES
@@ -53,7 +56,7 @@ DisplayBanner()
 {
     Report("\n\n\n\r");
     Report("\t\t *************************************************\n\r");
-    Report("\t\t  CC3200 GPIO Application       \n\r");
+    Report("\t\t                       PRISM                      \n\r");
     Report("\t\t *************************************************\n\r");
     Report("\n\n\n\r");
 }
@@ -103,9 +106,6 @@ main()
     // Power on the pinmux configurations
     PinMuxConfig();
 
-    // Init fft
-    InitFFT();
-
     InitTerm();
     ClearTerm();
 
@@ -114,8 +114,33 @@ main()
     DisplayBanner();
 
 
+    // Initialize all the Fast Fourier Transform stuff
+    InitFFT();
+
+    // Set up the bars and peaks here before the loop
+    uint8_t num_bars = 3;
+    q15_t bin_peaks[num_bars] = {0};
+
     while(1)
     {
-        // DO NOTHING
+        q15_t audio_inputs[FFT_SIZE] = {0}; // Record audio samples here
+
+        if (frame_ready) {
+
+            // The buffer is full. Process the FFT_SIZE number of samples.
+            // Populates `frequency_magnitudes` with scaled/processed magnitudes for different frequencies
+            ProcessAudioFrame(audio_inputs, frequency_magnitudes);
+
+            // Separate peaks into different bins and populate `bin_peaks`
+            BinPeaks(frequency_magnitudes, num_bars, bin_peaks);
+
+            // TODO: Update LED drawing here
+            // DrawVisual(mode, bin_peaks)
+
+            // Reset the index and lower the flag so the interrupt starts filling it again
+            sample_index = 0;
+            frame_ready = false;
+        }
+
     }
 }
