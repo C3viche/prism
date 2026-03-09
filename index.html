@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prism | Real-Time Audio Visualizer</title>
+    <style>
+        /* CSS Variables for easy color tweaking */
+        :root {
+            --bg-color: #0d1117;
+            --text-color: #c9d1d9;
+            --accent-color: #00f2fe;
+            --accent-gradient: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            --card-bg: #161b22;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        /* Hero Section */
+        header {
+            text-align: center;
+            padding: 100px 20px;
+            background: radial-gradient(circle at 50% -20%, #1a2a42, var(--bg-color) 60%);
+        }
+
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            background: -webkit-linear-gradient(45deg, #ff007f, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.5rem;
+            color: #8b949e;
+            margin-top: 10px;
+        }
+
+        /* Main Content Container */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* Video/Image Demo Area */
+        .demo-box {
+            width: 100%;
+            height: 400px;
+            background-color: #000;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 50px;
+            border: 1px solid #30363d;
+            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.1);
+        }
+
+        /* Features Grid */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .feature-card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            transition: transform 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-color);
+        }
+
+        .feature-card h3 {
+            color: var(--accent-color);
+            margin-top: 0;
+        }
+
+        /* Tech Stack Section */
+        .tech-stack {
+            text-align: center;
+            padding: 40px;
+            background-color: var(--card-bg);
+            border-radius: 12px;
+        }
+
+        .tech-stack p {
+            font-family: monospace;
+            color: #8b949e;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            border-top: 1px solid #30363d;
+            margin-top: 50px;
+            color: #8b949e;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>PRISM</h1>
+        <div class="subtitle">Interactive Real-Time Audio Visualization</div>
+    </header>
+
+    <div class="container">
+        
+        <div class="demo-box">
+            <p style="color: #484f58; font-style: italic;">[ Insert GIF/Video of LED strips reacting to music here ]</p>
+        </div>
+
+        <h2>System Architecture</h2>
+        <p>Prism is a high-performance audio spectrum analyzer built on the Texas Instruments CC3200 microcontroller. It captures live audio via a microphone, processes the frequencies using hardware-accelerated math, and maps the data to LED strips with custom gravity physics and color logic.</p>
+
+        <div class="features">
+            <div class="feature-card">
+                <h3>⚡ Hardware-Accelerated FFT</h3>
+                <p>Utilizes the ARM CMSIS-DSP library to compute a 512-point Fast Fourier Transform. By sampling audio at precisely 16kHz via a hardware timer, the system achieves zero-latency frequency binning using optimized q15 fixed-point math.</p>
+            </div>
+            
+            <div class="feature-card">
+                <h3>🎛️ Custom DSP Pipeline</h3>
+                <p>Raw FFT data is passed through a custom Digital Signal Processing pipeline. This includes a DC blocker, a silence noise gate to prevent LED flicker, and an Exponential Moving Average (EMA) filter to give the falling LED bars a smooth, realistic "gravity" effect.</p>
+            </div>
+
+            <div class="feature-card">
+                <h3>🧭 Interactive Accelerometer</h3>
+                <p>The visualizer responds to physical orientation. By reading the CC3200's onboard BMA222 accelerometer via I2C, physical tilt is dynamically mapped to the HSV color space, allowing the user to seamlessly shift the hue of the LEDs just by tilting the board.</p>
+            </div>
+        </div>
+
+        <div class="tech-stack">
+            <h3>Tech Stack & Hardware</h3>
+            <p>TI CC3200 LaunchPad • C/C++ • Code Composer Studio • ARM CMSIS-DSP • I2C & SPI • WS2812B LEDs</p>
+        </div>
+
+    </div>
+
+    <footer>
+        <p>Designed and engineered by Cristian & Alex.</p>
+    </footer>
+
+</body>
+</html>
