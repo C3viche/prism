@@ -9,9 +9,10 @@
 #define MODULES_FFT_FFT_H_
 
 #include "arm_math.h"
+#include "prism_utils.h"
 
 // 512 sample audio buffer (can be modified later)
-#define FFT_SIZE        512
+
 #define MAX_MAGNITUDE   200
 
 // Scale factor to increase magnitudes to a height that makes sense for the oled pixels
