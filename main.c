@@ -70,15 +70,18 @@ ChangeMode(char c) {
     switch (c) {
     case '1':
         mode = BAR;
-        Report("Mode is now BAR\n");
+        fillScreen(BLACK);
+        Report("Mode is now BAR\n\r");
         break;
     case '2':
         mode = WAVE;
-        Report("Mode is now WAVE\n");
+        fillScreen(BLACK);
+        Report("Mode is now WAVE\n\r");
         break;
     case '3':
         mode = PULSE;
-        Report("Mode is now PULSE\n");
+        fillScreen(BLACK);
+        Report("Mode is now PULSE\n\r");
         break;
     default:
         break;
