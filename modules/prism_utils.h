@@ -27,7 +27,13 @@
 
 #define ADC_SAMPLE_RATE 16000
 
+#define WINDOW_SIZE 512
+
 #define OLED_DIM   128
+
+#define BUFFER_NONE  0
+#define BUFFER_PING  1
+#define BUFFER_PONG  2
 
 typedef enum modes {
     BAR,
@@ -36,3 +42,4 @@ typedef enum modes {
 } mode_t;
 
 #endif /* MODULES_PRISM_UTILS_H_ */
+

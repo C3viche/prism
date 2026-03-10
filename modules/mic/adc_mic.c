@@ -1,4 +1,4 @@
-#include <modules/mic/adc_mic.h>
+#include "mic/adc_mic.h"
 #include "hw_memmap.h"
 #include "hw_types.h"
 #include "hw_adc.h"
@@ -18,8 +18,8 @@
 #define SYS_CLK_FREQ 80000000
 
 // Pointers to the two user-provided windows
-static uint16_t *g_pPing = 0;
-static uint16_t *g_pPong = 0;
+static q15_t *g_pPing = 0;
+static q15_t *g_pPong = 0;
 
 static volatile uint32_t g_uiCount = 0;
 static volatile uint32_t g_uiSize = 0;
@@ -48,11 +48,11 @@ void ADCIntHandler() {
     }
 
     // Get the pointer to the currently filling buffer
-    uint16_t *pCurrent = (g_activeBuffer == 0) ? g_pPing : g_pPong;
+    q15_t *pCurrent = (g_activeBuffer == 0) ? g_pPing : g_pPong;
 
     if (pCurrent != 0 && g_uiCount < g_uiSize) {
         // Read sample: Shifted right by 2 per CC3200 specs (12-bit value)
-        pCurrent[g_uiCount] = (uint16_t)((MAP_ADCFIFORead(ADC_BASE, ADC_CH_1) >> 2) & 0x0FFF);
+        pCurrent[g_uiCount] = (q15_t)((MAP_ADCFIFORead(ADC_BASE, ADC_CH_1) >> 2) & 0x0FFF);
         g_uiCount++;
 
         // Window is full! Swap buffers immediately
@@ -123,7 +123,7 @@ void SetupADCMic(uint32_t sampleRate) {
 
 
 // FULL VARIABLE RESET N STARTUP
-void StartADCSampling(uint16_t *ping_buffer, uint16_t *pong_buffer, uint32_t window_size) {
+void StartADCSampling(q15_t *ping_buffer, q15_t *pong_buffer, uint32_t window_size) {
     g_pPing = ping_buffer;
     g_pPong = pong_buffer;
     g_uiSize = window_size;
