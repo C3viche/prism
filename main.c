@@ -31,7 +31,6 @@
 #include "ir_buttons/ir_buttons.h"
 #include "mic/adc_mic.h"
 
-
 #include <stdbool.h>
 
 //*****************************************************************************
