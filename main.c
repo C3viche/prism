@@ -17,6 +17,7 @@
 #include "uart_if.h"
 #include "math.h"
 
+
 // Common interface includes
 #include "gpio_if.h"
 
@@ -28,6 +29,9 @@
 #include "fft/fft.h"
 #include "binning/binning.h"
 #include "ir_buttons/ir_buttons.h"
+#include "mic/adc_mic.h"
+
+
 #include <stdbool.h>
 
 //*****************************************************************************
