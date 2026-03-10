@@ -98,31 +98,6 @@
                                    if (SUCCESS != iRetVal) \
                                      return  iRetVal;}
 
-// Standard Colors (RGB565)
-#define BLACK           0x0000
-#define WHITE           0xFFFF
-#define GREY            0x8410
-
-// Primary Colors
-#define RED             0xF800
-#define GREEN           0x07E0
-#define BLUE            0x001F
-
-// Secondary Colors
-#define CYAN            0x07FF  // Green + Blue
-#define MAGENTA         0xF81F  // Red + Blue
-#define YELLOW          0xFFE0  // Red + Green
-
-// Fun Colors
-#define ORANGE          0xFD20
-#define PINK            0xF819
-#define PURPLE          0x8010
-#define LIME            0x07FF
-#define NAVY            0x000F
-#define TEAL            0x0410
-
-#define LED_COUNT 3
-
 // track systick counter periods elapsed
 // if it is not 0, we know the transmission ended
 

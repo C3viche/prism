@@ -19,6 +19,8 @@
 
 #define ADC_SAMPLE_RATE 16000
 
+#define OLED_DIM   128
+
 typedef enum modes {
     BAR,
     WAVE,
