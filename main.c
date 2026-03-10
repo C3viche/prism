@@ -28,6 +28,7 @@
 #include "fft/fft.h"
 #include "binning/binning.h"
 #include "ir_buttons/ir_buttons.h"
+#include "oled/oled.h"
 #include <stdbool.h>
 
 //*****************************************************************************
@@ -82,6 +83,42 @@ ChangeMode(char c) {
     default:
         break;
     }
+}
+
+static void
+InitSPI(void) {
+
+    //
+    // Enable the SPI module clock
+    //
+    MAP_PRCMPeripheralClkEnable(PRCM_GSPI,PRCM_RUN_MODE_CLK);
+
+    //
+    // Reset SPI
+    //
+    MAP_SPIReset(GSPI_BASE);
+
+    //
+    // Configure SPI interface
+    //
+    MAP_SPIConfigSetExpClk(GSPI_BASE,
+                               MAP_PRCMPeripheralClockGet(PRCM_GSPI),
+                               SPI_IF_BIT_RATE,
+                               SPI_MODE_MASTER,
+                               SPI_SUB_MODE_0,
+                               (SPI_SW_CTRL_CS |
+                                SPI_4PIN_MODE |
+                                SPI_TURBO_OFF |
+                                SPI_CS_ACTIVELOW |
+                                SPI_WL_8)
+                               );
+
+    //
+    // Enable SPI for communication
+    //
+    MAP_SPIEnable(GSPI_BASE);
+
+    Adafruit_Init();
 }
 
 
@@ -141,9 +178,16 @@ main()
     // Initialize all the Fast Fourier Transform stuff
     InitFFT();
 
+    // Set up SPI for communications with OLED
+    InitSPI();
+
+    fillScreen(BLACK);
+
     // Set up the bars and peaks here before the loop
     uint8_t num_bars = 3;
-    q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
+//    q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
+
+//    DrawBars(num_bars, sample_peaks, RED, RED, RED);
 
     while(1)
     {
@@ -153,13 +197,13 @@ main()
 
             // The buffer is full. Process the FFT_SIZE number of samples.
             // Populates `frequency_magnitudes` with scaled/processed magnitudes for different frequencies
-            ProcessAudioFrame(audio_inputs, frequency_magnitudes);
+//            ProcessAudioFrame(audio_inputs, frequency_magnitudes);
 
             // Separate peaks into different bins and populate `bin_peaks`
-            BinPeaks(frequency_magnitudes, num_bars, bin_peaks);
+//            BinPeaks(frequency_magnitudes, num_bars, bin_peaks);
 
-            // TODO: Update LED drawing here
-            // DrawVisual(mode, bin_peaks)
+            // TODO: Update LED drawing here based on different modes
+//             DrawVisual(mode, bin_peaks)
 
 
             // Reset the index and lower the flag so the interrupt starts filling it again
@@ -169,3 +213,10 @@ main()
 
     }
 }
+
+//    q15_t sample_peaks[16] = {
+//        120, 115, 90, 60,  // Deep Bass (Bars 0-3)
+//        40,  30,  25, 20,  // Low Mids (Bars 4-7)
+//        15,  12,  10, 10,  // High Mids (Bars 8-11)
+//        8,   5,   5,  10   // Treble (Bars 12-15)
+//    };
