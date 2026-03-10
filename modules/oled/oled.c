@@ -453,3 +453,21 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
         }
     }
 }
+
+void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
+    switch (mode) {
+    case BAR:
+        DrawBars(num_bins, bin_peaks, BASS_COLOR, MID_COLOR, TREBLE_COLOR);
+        break;
+    case WAVE:
+        DrawWaves(num_bins, bin_peaks, BASS_COLOR, MID_COLOR, TREBLE_COLOR);
+        break;
+    case PULSE:
+        Report("Pulse beat is unimplemented.\n\r");
+        break;
+    default:
+        Report("No mode selected. Cannot draw visuals\n\r");
+        break;
+    }
+
+}
