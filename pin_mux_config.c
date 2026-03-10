@@ -62,7 +62,7 @@ void PinMuxConfig(void)
     PinModeSet(PIN_45, PIN_MODE_0);
     PinModeSet(PIN_52, PIN_MODE_0);
     PinModeSet(PIN_53, PIN_MODE_0);
-    PinModeSet(PIN_58, PIN_MODE_0);
+//    PinModeSet(PIN_58, PIN_MODE_0);
     PinModeSet(PIN_59, PIN_MODE_0);
     PinModeSet(PIN_63, PIN_MODE_0);
     
@@ -75,6 +75,7 @@ void PinMuxConfig(void)
     PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_GSPI,   PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
+    PRCMPeripheralClkEnable(PRCM_ADC, PRCM_RUN_MODE_CLK);
 
     //
     // Configure PIN_64 for GPIO Output
@@ -191,4 +192,16 @@ void PinMuxConfig(void)
     PinTypeGPIO(PIN_18, PIN_MODE_0, false);
     GPIODirModeSet(GPIOA3_BASE, 0x10, GPIO_DIR_MODE_OUT);
 
+
+    //*****************************************************************************
+    //
+    //  Microphone Pins
+    //
+    //*****************************************************************************
+
+    //
+    // Configure PIN_58 for ADC_CH1 (MAX9814 Analog Out)
+    //
+
+    PinTypeADC(PIN_58, PIN_MODE_255);
 }
