@@ -129,9 +129,6 @@
 
 /* Exposed Helper Functions */
 void InitSystick(void);
-void InitCursorTimer(void);
-int FetchInput(char *finalMsg);
-void ButtonPress(int* lRetVal, int* prev_mask, int* char_idx, int* cursor, bool* enter, char msg[MAX_STRING_LENGTH+1], int (*f) (int, char*));
-void CheckButtonTimeout(int* prev_mask, int* char_idx, int* cursor);
+void ButtonPress(void (*f) (char));
 
 #endif /* TEXTING_CLIENT_H_ */
