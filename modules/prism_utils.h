@@ -15,6 +15,14 @@
 #define MAX_ADC_VALUE ((1 << 12) - 1)
 #define ADC_DC_OFFSET (1 << 11)
 
+// BASS: 20 - 200 HZ
+// MID:  200 - 2000 HZ
+// TREBLE 2000 - 20000
+// Spread for mid, bass, and treble ranges (for colors)
+#define BASS 0.3f
+#define MID 0.7f
+#define TREBLE 1.0f
+
 #define FFT_SIZE        512
 
 #define ADC_SAMPLE_RATE 16000

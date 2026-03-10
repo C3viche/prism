@@ -184,7 +184,7 @@ main()
     fillScreen(BLACK);
 
     // Set up the bars and peaks here before the loop
-    uint8_t num_bars = 3;
+//    uint8_t num_bars = 3;
 //    q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
 //    DrawBars(num_bars, sample_peaks, RED, RED, RED);

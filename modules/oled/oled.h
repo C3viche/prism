@@ -16,14 +16,28 @@
 #include "arm_math.h"
 
 // Color definitions
+// Standard Colors (RGB565)
 #define BLACK           0x0000
-#define BLUE            0x001F
-#define GREEN           0x07E0
-#define CYAN            0x07FF
-#define RED             0xF800
-#define MAGENTA         0xF81F
-#define YELLOW          0xFFE0
 #define WHITE           0xFFFF
+#define GREY            0x8410
+
+// Primary Colors
+#define RED             0xF800
+#define GREEN           0x07E0
+#define BLUE            0x001F
+
+// Secondary Colors
+#define CYAN            0x07FF  // Green + Blue
+#define MAGENTA         0xF81F  // Red + Blue
+#define YELLOW          0xFFE0  // Red + Green
+
+// Fun Colors
+#define ORANGE          0xFD20
+#define PINK            0xF819
+#define PURPLE          0x8010
+#define LIME            0x07FF
+#define NAVY            0x000F
+#define TEAL            0x0410
 
 
 void testfastlines(unsigned int color1, unsigned int color2);

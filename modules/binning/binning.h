@@ -13,14 +13,6 @@
 #include "prism_utils.h"
 #include "arm_math.h"
 
-// BASS: 20 - 200 HZ
-// MID:  200 - 2000 HZ
-// TREBLE 2000 - 20000
-// Define the maximums here
-#define BASS 200
-#define MID 2000
-#define TREBLE (ADC_SAMPLE_RATE / 2) // Max treble will cap at our maximum (or 20000)
-
 #define BIN_WIDTH (ADC_SAMPLE_RATE / FFT_SIZE) // HZ per bin
 
 // Min and max bars to be displayed on the screen

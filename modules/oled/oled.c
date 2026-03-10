@@ -305,14 +305,18 @@ void drawVerticalLines(unsigned int color) {
 /**************************************************************************/
 
 void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
-
-    (void)color2;
-    (void)color3;
+    fillScreen(BLACK);
 
     size_t bar_width = OLED_DIM / num_bars;
 
-    int i;
+    size_t i;
     for (i = 0; i < num_bars; i++) {
-        fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color1);
+        if (i < (num_bars * BASS)) {
+            fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color1);
+        } else if (i < (num_bars * MID)) {
+            fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color2);
+        } else {
+            fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color3);
+        }
     }
 }
