@@ -10,6 +10,7 @@
 // an OLED test program. See SPI example program.
 
 #include "oled.h"
+#include "binning/binning.h"
 
 #define BASE_CHAR_SCALE 6
 #define BASE_LINE_WIDTH 8
@@ -304,19 +305,151 @@ void drawVerticalLines(unsigned int color) {
 
 /**************************************************************************/
 
-void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
-    fillScreen(BLACK);
+static void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
 
+    // Stores the Y-coordinate of the TOP of each bar from the previous frame.
+    static uint8_t old_y_coords[MAX_POSSIBLE_BARS];
+    static bool first_run = true;
+
+    // On the very first frame, pretend all bars are at Y = 128 (height of 0)
+    if (first_run) {
+        int i;
+        for(i = 0; i < MAX_POSSIBLE_BARS; i++) {
+            old_y_coords[i] = OLED_DIM;
+        }
+        first_run = false;
+    }
+
+    // Leave a 1-pixel gap between bars so they don't blend into a single blob
     size_t bar_width = OLED_DIM / num_bars;
+    size_t draw_width = bar_width - 1;
 
     size_t i;
     for (i = 0; i < num_bars; i++) {
+
+        // The percentage spread by x-position
+        unsigned int bar_color;
         if (i < (num_bars * BASS)) {
-            fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color1);
+            bar_color = color1; // Bass
         } else if (i < (num_bars * MID)) {
-            fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color2);
+            bar_color = color2; // Mid
         } else {
-            fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color3);
+            bar_color = color3; // Treble
+        }
+
+        // Cap the peak just in case so it doesn't go "off screen" (shouldn't happen but better safe than sorry)
+        q15_t peak = bin_peaks[i];
+        if (peak > OLED_DIM) peak = OLED_DIM;
+
+        // Calculate the physical Y-coordinates
+        int new_y = OLED_DIM - peak;
+        int old_y = old_y_coords[i];
+        int x = i * bar_width;
+
+        // The dirty overwrite logic to erase/update bar
+        if (new_y < old_y) {
+            // The bar grew TALLER. Draw the new color from the new tip down to the old tip.
+            fillRect(x, new_y, draw_width, old_y - new_y, bar_color);
+        } else if (new_y > old_y) {
+            // The bar got SHORTER. Erase the empty space by drawing BLACK over the old tip.
+            fillRect(x, old_y, draw_width, new_y - old_y, BLACK);
+        }
+        // NOTE: If new_y == old_y, we do literally nothing. It saves SPI bandwidth.
+
+        // Update the memory for the next frame
+        old_y_coords[i] = new_y;
+
+    }
+}
+
+// Add the prototype so oled.c knows the function exists in Adafruit_OLED.c
+extern unsigned int Color565(unsigned char r, unsigned char g, unsigned char b);
+
+static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
+
+    // This permanently remembers the exact Y-coordinate of every pixel from the previous frame.
+    static uint8_t old_y_coords[MAX_POSSIBLE_BARS][OLED_DIM] = {0};
+    int max_y = OLED_DIM - 1;
+
+    // The Animation Engine (Phase Shift)
+    // Static makes it remember its value between frames
+    static float phase_offset = 0.0f;
+
+    // Increase this to make the waves scroll left faster (Direction of Travel)
+    phase_offset += PHASE_TRAVEL;
+
+    // Prevent floating-point overflow by wrapping at 2*PI
+    if (phase_offset > TWO_PI) {
+        phase_offset -= TWO_PI;
+    }
+
+    // Draw each wave
+    size_t w;
+    for (w = 0; w < num_waves; w++) {
+
+        // Grab the peak for this specific wave but divide by 2 so the wave doesn't
+        // immediately clip off the top/bottom of the screen.
+        q15_t amplitude = bin_peaks[w] / 2;
+
+        // Space the frequencies out slightly so they don't perfectly overlap
+        float frequency = 0.08f + (0.01f * w);
+
+        // Shift each wave's starting phase so they look layered
+        float wave_shift = phase_offset + (w * 1.0f);
+
+        int prev_y = -1;
+        int x;
+
+        // Choose a "base" color based on the bass, mid, treble split
+        unsigned int base_color;
+        if (w < (num_waves * BASS)) {
+            base_color = color1; // Bass
+        } else if (w < (num_waves * MID)) {
+            base_color = color2; // Mids
+        } else {
+            base_color = color3; // Treble
+        }
+
+        // Extract the 8-bit R, G, and B components from the 16-bit color
+        // We shift the bits down and multiply them to get them back to the standard 0-255 range
+        unsigned char r_base = EXTRACT_RED(base_color);
+        unsigned char g_base = EXTRACT_GREEN(base_color);
+        unsigned char b_base = EXTRACT_BLUE(base_color);
+
+        // Plot the curve pixel-column by pixel-column
+        for (x = 0; x < OLED_DIM; x++) {
+
+            float angle = (frequency * x) + wave_shift;
+
+            // Calculate Y. We add (height / 2) to perfectly center the baseline.
+            int y = (OLED_DIM / 2) + (int)(amplitude * sinf(angle));
+
+            // Safety bounds check so we don't draw off the screen
+            if (y < 0) y = 0;
+            if (y >= OLED_DIM) y = max_y;
+
+            if (x > 0) {
+
+                // Erase (Draw over the exact line from the LAST frame in BLACK)
+                drawLine(x - 1, old_y_coords[w][x - 1], x, old_y_coords[w][x], BLACK);
+
+                // Apply y-axis gradient
+                // Red and Green fade to 0 (Black) at the bottom
+                unsigned char final_r = FADE_TO_BLACK(r_base, y, max_y);
+                unsigned char final_g = FADE_TO_BLACK(g_base, y, max_y);
+
+                // Blue blends from its base color down to 255 (Solid Blue) at the bottom
+                unsigned char final_b = BLEND_TO_TARGET(b_base, 255, y, max_y);
+
+                // Generate the 16-bit RGB565 color on the fly
+                unsigned int dynamic_color = Color565(final_r, final_g, final_b);
+
+                // Draw a tiny line segment connecting the previous point to this point
+                drawLine(x - 1, prev_y, x, y, dynamic_color);
+            }
+            // Save this new Y-coordinate so we can erase it NEXT frame
+            old_y_coords[w][x] = y;
+            prev_y = y; // Save current Y for the next loop iteration
         }
     }
 }
