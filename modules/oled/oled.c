@@ -9,11 +9,7 @@
 // TODO Configure SPI port and use these libraries to implement
 // an OLED test program. See SPI example program.
 
-#include "oled_test.h"
-#include "glcdfont.h"
-
-#include "Adafruit_GFX.h"
-#include "Adafruit_SSD1351.h"
+#include "oled.h"
 
 #define BASE_CHAR_SCALE 6
 #define BASE_LINE_WIDTH 8
@@ -307,3 +303,16 @@ void drawVerticalLines(unsigned int color) {
 }
 
 /**************************************************************************/
+
+void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
+
+    (void)color2;
+    (void)color3;
+
+    size_t bar_width = OLED_DIM / num_bars;
+
+    int i;
+    for (i = 0; i < num_bars; i++) {
+        fillRect(i * bar_width, 0, bar_width, bin_peaks[i], color1);
+    }
+}

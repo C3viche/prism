@@ -8,6 +8,13 @@
 #ifndef OLED_OLED_TEST_H_
 #define OLED_OLED_TEST_H_
 
+#include "glcdfont.h"
+#include "Adafruit_GFX.h"
+#include "Adafruit_SSD1351.h"
+
+#include "prism_utils.h"
+#include "arm_math.h"
+
 // Color definitions
 #define BLACK           0x0000
 #define BLUE            0x001F
@@ -34,5 +41,6 @@ void drawFontTable(int x, int y, unsigned int color, unsigned int bg, unsigned c
 void drawString(int x, int y, char *str, unsigned int color, unsigned int bg, unsigned char size);
 void drawHorizontalLines(unsigned int color);
 void drawVerticalLines(unsigned int color);
+void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3);
 
 #endif /* OLED_OLED_TEST_H_ */
