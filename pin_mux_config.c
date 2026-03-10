@@ -64,7 +64,6 @@ void PinMuxConfig(void)
     PinModeSet(PIN_08, PIN_MODE_0);
     PinModeSet(PIN_21, PIN_MODE_0);
     PinModeSet(PIN_45, PIN_MODE_0);
-    PinModeSet(PIN_50, PIN_MODE_0);
     PinModeSet(PIN_52, PIN_MODE_0);
     PinModeSet(PIN_53, PIN_MODE_0);
     PinModeSet(PIN_58, PIN_MODE_0);
@@ -77,6 +76,7 @@ void PinMuxConfig(void)
     //
     // Enable Peripheral Clocks 
     //
+    PRCMPeripheralClkEnable(PRCM_GPIOA0, PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_GPIOA1, PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_GPIOA2, PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
@@ -117,6 +117,10 @@ void PinMuxConfig(void)
     //
     PinTypeGPIO(PIN_18, PIN_MODE_0, false);
     GPIODirModeSet(GPIOA3_BASE, 0x10, GPIO_DIR_MODE_OUT);
+
+    // IR Reader input
+    PinTypeGPIO(PIN_50, PIN_MODE_0, false);
+    GPIODirModeSet(GPIOA0_BASE, 0x1, GPIO_DIR_MODE_IN);
 
     //
     // Configure PIN_55 for UART0 UART0_TX
