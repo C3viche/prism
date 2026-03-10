@@ -17,7 +17,6 @@
 
 // Scale factor to increase magnitudes to a height that makes sense for the oled pixels
 #define OLED_SCALE 2
-#define OLED_DIM   128
 
 void InitFFT(void);
 void ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2]);
