@@ -25,6 +25,7 @@
 
 #define APPLICATION_VERSION     "1.4.0"
 
+
 // Custom Prism module includes
 #include "fft/fft.h"
 #include "binning/binning.h"
@@ -34,6 +35,9 @@
 
 #include <stdbool.h>
 
+
+static q15_t g_ping[WINDOW_SIZE];
+static q15_t g_pong[WINDOW_SIZE];
 //*****************************************************************************
 //                 GLOBAL VARIABLES
 //*****************************************************************************
@@ -47,8 +51,8 @@ extern uVectorEntry __vector_table;
 q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
 q15_t audio_inputs[FFT_SIZE];            // Raw ADC microphone readings
 
-volatile uint16_t sample_index = 0;   // Keeps track of where we are in the audio inputs array for timer interrupts
-volatile uint8_t frame_ready = false;     // The flag
+//volatile uint16_t sample_index = 0;   // Keeps track of where we are in the audio inputs array for timer interrupts
+//volatile uint8_t frame_ready = false;     // The flag
 mode_t mode = BAR;
 
 //*****************************************************************************
@@ -181,6 +185,10 @@ main()
 
     InitSystick();
 
+    SetupADCMic(ADC_SAMPLE_RATE);
+
+    StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
+
     // Initialize all the Fast Fourier Transform stuff
     InitFFT();
 
@@ -189,33 +197,56 @@ main()
 
     fillScreen(BLACK);
 
-    // Set up the bars and peaks here before the loop
-//    uint8_t num_bars = 3;
-//    q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
-//    DrawBars(num_bars, sample_peaks, RED, RED, RED);
+
+    // Set up the bars and peaks here before the loop
+    uint8_t num_bins = 3;
+    q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
+
+    fillScreen(BLACK);
+
 
     while(1)
     {
         ButtonPress(ChangeMode);
+        int readyBuffer = CheckBufferReady();
+        if (readyBuffer == BUFFER_PING) {
+            ProcessAudioFrame(g_ping, frequency_magnitudes);
+            BinPeaks(frequency_magnitudes, num_bins, bin_peaks);
 
-        if (frame_ready) {
-
-            // The buffer is full. Process the FFT_SIZE number of samples.
-            // Populates `frequency_magnitudes` with scaled/processed magnitudes for different frequencies
-//            ProcessAudioFrame(audio_inputs, frequency_magnitudes);
-
-            // Separate peaks into different bins and populate `bin_peaks`
-//            BinPeaks(frequency_magnitudes, num_bars, bin_peaks);
-
-            // TODO: Update LED drawing here based on different modes
-//             DrawVisual(mode, bin_peaks)
-
-
-            // Reset the index and lower the flag so the interrupt starts filling it again
-            sample_index = 0;
-            frame_ready = false;
+            DrawVisuals(mode, num_bins, bin_peaks);
+            ClearBufferFlag(BUFFER_PING);
         }
+        else if (readyBuffer == BUFFER_PONG) {
+            ProcessAudioFrame(g_pong, frequency_magnitudes);
+            BinPeaks(frequency_magnitudes, num_bins, bin_peaks);
+
+            DrawVisuals(mode, num_bins, bin_peaks);
+            ClearBufferFlag(BUFFER_PONG);
+        }
+        else if (readyBuffer == -1){
+            Report("ERROR: System Overrun detected! Math or UART is too slow.\n\r");
+//            PrintADCHealth();
+        }
+
+
+//        if (frame_ready) {
+//
+//            // The buffer is full. Process the FFT_SIZE number of samples.
+//            // Populates `frequency_magnitudes` with scaled/processed magnitudes for different frequencies
+//            ProcessAudioFrame(audio_inputs, frequency_magnitudes);
+//
+//            // Separate peaks into different bins and populate `bin_peaks`
+//            BinPeaks(frequency_magnitudes, num_bars, bin_peaks);
+//
+//            // TODO: Update LED drawing here based on different modes
+//             DrawVisual(mode, bin_peaks)
+//
+//
+//            // Reset the index and lower the flag so the interrupt starts filling it again
+//            sample_index = 0;
+//            frame_ready = false;
+//        }
 
     }
 }
