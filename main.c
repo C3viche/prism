@@ -27,6 +27,7 @@
 // Custom Prism module includes
 #include "fft/fft.h"
 #include "binning/binning.h"
+#include "ir_buttons/ir_buttons.h"
 #include <stdbool.h>
 
 //*****************************************************************************
@@ -44,11 +45,13 @@ q15_t audio_inputs[FFT_SIZE];            // Raw ADC microphone readings
 
 volatile uint16_t sample_index = 0;   // Keeps track of where we are in the audio inputs array for timer interrupts
 volatile uint8_t frame_ready = false;     // The flag
+mode_t mode = BAR;
 
 //*****************************************************************************
 //                      LOCAL FUNCTION PROTOTYPES
 //*****************************************************************************
 static void BoardInit(void);
+static void ChangeMode(char c);
 
 
 static void
@@ -60,6 +63,27 @@ DisplayBanner()
     Report("\t\t *************************************************\n\r");
     Report("\n\n\n\r");
 }
+
+static void
+ChangeMode(char c) {
+    switch (c) {
+    case '1':
+        mode = BAR;
+        Report("Mode is now BAR\n");
+        break;
+    case '2':
+        mode = WAVE;
+        Report("Mode is now WAVE\n");
+        break;
+    case '3':
+        mode = PULSE;
+        Report("Mode is now PULSE\n");
+        break;
+    default:
+        break;
+    }
+}
+
 
 //*****************************************************************************
 //
@@ -109,10 +133,10 @@ main()
     InitTerm();
     ClearTerm();
 
-
     // Display banner and usage message
     DisplayBanner();
 
+    InitSystick();
 
     // Initialize all the Fast Fourier Transform stuff
     InitFFT();
@@ -123,6 +147,7 @@ main()
 
     while(1)
     {
+        ButtonPress(ChangeMode);
 
         if (frame_ready) {
 
@@ -135,6 +160,7 @@ main()
 
             // TODO: Update LED drawing here
             // DrawVisual(mode, bin_peaks)
+
 
             // Reset the index and lower the flag so the interrupt starts filling it again
             sample_index = 0;

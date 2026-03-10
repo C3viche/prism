@@ -19,4 +19,10 @@
 
 #define ADC_SAMPLE_RATE 16000
 
+typedef enum modes {
+    BAR,
+    WAVE,
+    PULSE
+} mode_t;
+
 #endif /* MODULES_PRISM_UTILS_H_ */
