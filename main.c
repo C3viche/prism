@@ -17,6 +17,7 @@
 #include "uart_if.h"
 #include "math.h"
 
+
 // Common interface includes
 #include "gpio_if.h"
 
@@ -27,6 +28,9 @@
 // Custom Prism module includes
 #include "fft/fft.h"
 #include "binning/binning.h"
+#include "mic/adc_mic.h"
+
+
 #include <stdbool.h>
 
 //*****************************************************************************
