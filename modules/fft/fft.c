@@ -36,10 +36,12 @@ ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
     for(i = 1; i < FFT_SIZE / 2; i++) {
         // Use a 32-bit integer for the dangerous magnitude multiplication
         int32_t raw_mag = frequency_magnitudes[i];
-//
-//        float boost_factor = 1.0f + ((float)i / 40.0f);
-//        raw_mag = (int32_t)(raw_mag * boost_factor);
+
+//        float treble_boost = 1.0f + ((float)i / 20.0f);
+//        raw_mag = (int32_t)(raw_mag * treble_boost);
+
         int32_t scaled_mag = raw_mag * OLED_SCALE;
+
 
         // Cap it BEFORE it has a chance to overflow the final calculation
         if (scaled_mag > MAX_MAGNITUDE) {

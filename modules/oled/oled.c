@@ -421,10 +421,11 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
         // Plot the curve pixel-column by pixel-column
         for (x = 0; x < OLED_DIM; x++) {
 
-            q15_t angle = (frequency * x) + wave_shift;
-            q15_t q15_phase = (q15_t)(angle * 10430.37f); // This maps 0 -> 2*PI to -32768 -> 32767.
+            float angle = (frequency * (float)x) + wave_shift;
+            int32_t full_phase = (int32_t)(angle * 10430.37f); // This maps 0 -> 2*PI to -32768 -> 32767.
 
             // This returns a value between -32768 and 32767.
+            q15_t q15_phase = (q15_t)full_phase;
             q15_t sin_val = arm_sin_q15(q15_phase);
 
             // Calculate Y. We add (height / 2) to perfectly center the baseline.
@@ -473,31 +474,47 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
     }
 }
 
-static void DrawPulse(q15_t* bin_peaks) {
-    // Keep track of the previous radius to erase it cleanly
-    static uint8_t old_radius = 0;
+static void DrawPulse(size_t num_bins, q15_t* bin_peaks) {
+    static uint8_t old_r_bass = 0, old_r_mid = 0, old_r_treble = 0;
 
-    // Calculate the "Beat Energy"
-    // We average the first 3 bars (Bass range) to get a stable pulse
-    int32_t beat_energy = (bin_peaks[0] + bin_peaks[1] + bin_peaks[2]) / 3;
+        // 1. Calculate Averages for the 3 Frequency Zones
+        // BASS: First 20% of the bars
+        int32_t bass_sum = 0;
+        int bass_end = (num_bins * 2) / 10;
+        if (bass_end < 1) bass_end = 1;
+        int i;
+        for(i = 0; i < bass_end; i++) { bass_sum += bin_peaks[i]; }
+        int32_t bass_e = bass_sum / bass_end;
 
-    // Scale the energy to a pixel radius (0 to 60 pixels)
-    // OLED_DIM is 128, so a max radius of 60 keeps it on screen
-    uint8_t new_radius = (beat_energy * PULSE_BOOST) / MAX_MAGNITUDE;
-    if (new_radius > PULSE_BOOST) new_radius = PULSE_BOOST;
+        // MIDS: The middle 40% (centered)
+        int32_t mid_sum = 0;
+        int mid_start = num_bins / 3;
+        int mid_end = (num_bins * 2) / 3;
+        for(i = mid_start; i < mid_end; i++) { mid_sum += bin_peaks[i]; }
+        int32_t mid_e = mid_sum / (mid_end - mid_start);
 
-    // 3. The "Dirty Overwrite"
-    if (new_radius < old_radius) {
-        // Pulse is shrinking: Erase the outer ring
-        drawCircle(OLED_DIM/2, OLED_DIM/2, old_radius, BLACK);
-    } else if (new_radius > old_radius) {
-        // Pulse is growing: Draw the new ring
-        // Color shifts from Blue (calm) to Red (intense beat)
-        unsigned int pulse_color = Color565(new_radius * 4, 100, 255 - (new_radius * 4));
-        drawCircle(OLED_DIM/2, OLED_DIM/2, new_radius, pulse_color);
-    }
+        // TREBLE: The upper 30%, starting before the very end
+        // This captures the 'shimmer' without getting stuck in the dead air at the top
+        int32_t treb_sum = 0;
+        int treb_start = (num_bins * 7) / 10;
+        for(i = treb_start; i < num_bins; i++) { treb_sum += bin_peaks[i]; }
+        int32_t treb_e = treb_sum / (num_bins - treb_start);
 
-    old_radius = new_radius;
+        // 2. Map to Radii using PULSE_BOOST
+        uint8_t r_bass   = (bass_e * PULSE_BOOST) / MAX_MAGNITUDE;
+        uint8_t r_mid    = (mid_e  * 40) / MAX_MAGNITUDE;
+        uint8_t r_treble = (treb_e * 25) / MAX_MAGNITUDE; // Slightly larger for visibility
+
+        // 3. Erase and Draw (Dirty Overwrite)
+        if (old_r_bass != r_bass)     drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_bass, BLACK);
+        if (old_r_mid != r_mid)       drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_mid, BLACK);
+        if (old_r_treble != r_treble) drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_treble, BLACK);
+
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_bass,   BASS_COLOR);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_mid,    MID_COLOR);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_treble, TREBLE_COLOR);
+
+        old_r_bass = r_bass; old_r_mid = r_mid; old_r_treble = r_treble;
 }
 
 void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
@@ -509,7 +526,7 @@ void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
         DrawWaves(num_bins, bin_peaks, BASS_COLOR, MID_COLOR, TREBLE_COLOR);
         break;
     case PULSE:
-        DrawPulse(bin_peaks);
+        DrawPulse(num_bins, bin_peaks);
         break;
     default:
         Report("No mode selected. Cannot draw visuals\n\r");
