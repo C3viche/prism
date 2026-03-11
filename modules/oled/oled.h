@@ -64,6 +64,9 @@
 // Blends a base color intensity into a target color intensity based on Y position
 #define BLEND_TO_TARGET(base, target, y, max_y) ((((base) * ((max_y) - (y))) + ((target) * (y))) / (max_y))
 
+// The factor to make the pulse amplitude bigger
+#define PULSE_BOOST 62
+
 // Custom functions
 void drawFontTable(int x, int y, unsigned int color, unsigned int bg, unsigned char size);
 void drawString(int x, int y, char *str, unsigned int color, unsigned int bg, unsigned char size);

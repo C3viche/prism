@@ -19,7 +19,7 @@
 #define MAX_POSSIBLE_BARS 64
 #define MIN_POSSIBLE_BARS 3
 
-#define MUSICAL_MAX_FREQ 5000.0f
+#define MUSICAL_MAX_FREQ 3000.0f
 
 // Automatically calculates to 255.0f for a 512-point FFT
 // Formula: (FFT_SIZE / 2) - 1

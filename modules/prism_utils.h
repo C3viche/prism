@@ -35,6 +35,8 @@
 #define BUFFER_PING  1
 #define BUFFER_PONG  2
 
+#define MAX_MAGNITUDE   200
+
 typedef enum modes {
     BAR,
     WAVE,

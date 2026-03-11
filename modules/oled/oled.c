@@ -399,7 +399,7 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
         // Shift each wave's starting phase so they look layered
         float wave_shift = phase_offset + (w * 1.0f);
 
-//        int prev_y = -1;
+        int prev_y = -1;
         int x;
 
         // Choose a "base" color based on the bass, mid, treble split
@@ -422,13 +422,14 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
         for (x = 0; x < OLED_DIM; x++) {
 
             q15_t angle = (frequency * x) + wave_shift;
-            q15_t q15_angle = (q15_t)( (angle / TWO_PI) * 65535.0f - 32768.0f ); // This maps 0 -> 2*PI to -32768 -> 32767.
+            q15_t q15_phase = (q15_t)(angle * 10430.37f); // This maps 0 -> 2*PI to -32768 -> 32767.
 
             // This returns a value between -32768 and 32767.
-            q15_t sin_val = arm_sin_q15(q15_angle);
+            q15_t sin_val = arm_sin_q15(q15_phase);
 
             // Calculate Y. We add (height / 2) to perfectly center the baseline.
-            int y = (OLED_DIM / 2) + ((amplitude * sin_val) >> 15); // shifts the Q15 result back to pixel space.
+            int offset = (int)((int32_t)amplitude * sin_val >> 15);
+            int y = (OLED_DIM / 2) + offset; // shifts the Q15 result back to pixel space.
 
             // Safety bounds check so we don't draw off the screen
             if (y < 0) y = 0;
@@ -436,14 +437,15 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
 
             if (x > 0) {
 
-                int old_y = old_y_coords[w][x];
-                int center = OLED_DIM / 2;
+//                int old_y = old_y_coords[w][x];
+//                int center = OLED_DIM / 2;
 
                 // Erase (Draw over the exact line from the LAST frame in BLACK)
-                if (old_y < center)
-                    drawFastVLine(x, old_y, center - old_y, BLACK);
-                else
-                    drawFastVLine(x, center, old_y - center, BLACK);
+//                if (old_y < center)
+//                    drawFastVLine(x, old_y, center - old_y, BLACK);
+//                else
+//                    drawFastVLine(x, center, old_y - center, BLACK);
+                drawLine(x - 1, old_y_coords[w][x - 1], x, old_y_coords[w][x], BLACK);
 
                 // Apply y-axis gradient
                 // Red and Green fade to 0 (Black) at the bottom
@@ -458,16 +460,44 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
 
                 // DrawFastVLine is a lot faster
                 // This fills the space between the center and the peak
-                if (y < center)
-                    drawFastVLine(x, y, center - y, dynamic_color);
-                else
-                    drawFastVLine(x, center, y - center, dynamic_color);
+//                if (y < center)
+//                    drawFastVLine(x, y, center - y, dynamic_color);
+//                else
+//                    drawFastVLine(x, center, y - center, dynamic_color);
+                drawLine(x - 1, prev_y, x, y, dynamic_color);
             }
             // Save this new Y-coordinate so we can erase it NEXT frame
             old_y_coords[w][x] = y;
-//            prev_y = y; // Save current Y for the next loop iteration
+            prev_y = y; // Save current Y for the next loop iteration
         }
     }
+}
+
+static void DrawPulse(q15_t* bin_peaks) {
+    // Keep track of the previous radius to erase it cleanly
+    static uint8_t old_radius = 0;
+
+    // Calculate the "Beat Energy"
+    // We average the first 3 bars (Bass range) to get a stable pulse
+    int32_t beat_energy = (bin_peaks[0] + bin_peaks[1] + bin_peaks[2]) / 3;
+
+    // Scale the energy to a pixel radius (0 to 60 pixels)
+    // OLED_DIM is 128, so a max radius of 60 keeps it on screen
+    uint8_t new_radius = (beat_energy * PULSE_BOOST) / MAX_MAGNITUDE;
+    if (new_radius > PULSE_BOOST) new_radius = PULSE_BOOST;
+
+    // 3. The "Dirty Overwrite"
+    if (new_radius < old_radius) {
+        // Pulse is shrinking: Erase the outer ring
+        drawCircle(OLED_DIM/2, OLED_DIM/2, old_radius, BLACK);
+    } else if (new_radius > old_radius) {
+        // Pulse is growing: Draw the new ring
+        // Color shifts from Blue (calm) to Red (intense beat)
+        unsigned int pulse_color = Color565(new_radius * 4, 100, 255 - (new_radius * 4));
+        drawCircle(OLED_DIM/2, OLED_DIM/2, new_radius, pulse_color);
+    }
+
+    old_radius = new_radius;
 }
 
 void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
@@ -479,7 +509,7 @@ void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
         DrawWaves(num_bins, bin_peaks, BASS_COLOR, MID_COLOR, TREBLE_COLOR);
         break;
     case PULSE:
-        Report("Pulse beat is unimplemented.\n\r");
+        DrawPulse(bin_peaks);
         break;
     default:
         Report("No mode selected. Cannot draw visuals\n\r");
