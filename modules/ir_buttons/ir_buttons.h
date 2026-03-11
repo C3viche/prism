@@ -49,6 +49,8 @@
 #include "timer.h"
 #include "prcm.h"
 
+#include "prism_utils.h"
+
 //#include "pin_mux_config.h"
 
 #define MICROSECONDS_TO_TICKS(us)   ((SYS_CLK/1000000) * (us))
@@ -78,7 +80,7 @@
 // OLED STUFF //
 #define FRAME_RATE_DELAY 600000
 
-#define SPI_IF_BIT_RATE  10000000
+#define SPI_IF_BIT_RATE  20000000
 #define TR_BUFF_SIZE     100
 
 #define ALEX_OLED        UARTA0_BASE

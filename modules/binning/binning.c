@@ -28,9 +28,15 @@ CalculateBinCutoffs(uint8_t num_bars) {
     for (i = 0; i <= num_bars; i++) {
         // Calculate the exact float value
         float exact_cutoff = MIN_BIN_INDEX * powf(ratio, (float)i / (float)num_bars);
+        uint16_t val = (uint16_t)roundf(exact_cutoff);
+
+        // SAFETY: Never exceed the physical FFT output size (255 for 512 FFT)
+        if (val > (FFT_SIZE / 2) - 1) {
+            val = (FFT_SIZE / 2) - 1;
+        }
 
         // Round it to the nearest integer index and store it
-        bin_cutoffs[i] = (uint16_t)roundf(exact_cutoff);
+        bin_cutoffs[i] = val;
     }
 
     // Save this so we know we've already done the math for this size

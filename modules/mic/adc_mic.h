@@ -13,5 +13,6 @@ void SetupADCMic(uint32_t sampleRate);
 void StartADCSampling(q15_t *ping_buffer, q15_t *pong_buffer, uint32_t window_size);
 int  CheckBufferReady(); // Returns BUFFER_PING, BUFFER_PONG, or BUFFER_NONE
 void ClearBufferFlag(int buffer_id);
+void ClearOverrunFlag();
 
 #endif

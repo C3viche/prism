@@ -30,7 +30,7 @@
 #define OLED_CS_BASE GPIOA0_BASE
 #define OLED_CS_PIN  0x40
 
-#define SPI_IF_BIT_RATE  100000
+#define SPI_IF_BIT_RATE  20000000
 
 
 void writeCommand(unsigned char c) {

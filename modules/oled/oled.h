@@ -17,6 +17,7 @@
 
 #include "prism_utils.h"
 #include "arm_math.h"
+#include "dsp/fast_math_functions.h"
 
 #include "uart_if.h"
 

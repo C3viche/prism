@@ -41,9 +41,9 @@ static q15_t g_pong[WINDOW_SIZE];
 //*****************************************************************************
 //                 GLOBAL VARIABLES
 //*****************************************************************************
-#if defined(ccs)
+//#if defined(ccs)
 extern void (* const g_pfnVectors[])(void);
-#endif
+//#endif
 #if defined(ewarm)
 extern uVectorEntry __vector_table;
 #endif
@@ -59,7 +59,6 @@ mode_t mode = BAR;
 //                      LOCAL FUNCTION PROTOTYPES
 //*****************************************************************************
 static void BoardInit(void);
-static void ChangeMode(char c);
 
 
 static void
@@ -70,29 +69,6 @@ DisplayBanner()
     Report("\t\t                       PRISM                      \n\r");
     Report("\t\t *************************************************\n\r");
     Report("\n\n\n\r");
-}
-
-static void
-ChangeMode(char c) {
-    switch (c) {
-    case '1':
-        mode = BAR;
-        fillScreen(BLACK);
-        Report("Mode is now BAR\n\r");
-        break;
-    case '2':
-        mode = WAVE;
-        fillScreen(BLACK);
-        Report("Mode is now WAVE\n\r");
-        break;
-    case '3':
-        mode = PULSE;
-        fillScreen(BLACK);
-        Report("Mode is now PULSE\n\r");
-        break;
-    default:
-        break;
-    }
 }
 
 static void
@@ -131,6 +107,29 @@ InitSPI(void) {
     Adafruit_Init();
 }
 
+static void
+ChangeMode(char c) {
+    switch (c) {
+    case '1':
+        mode = BAR;
+        fillScreen(BLACK);
+        Report("Mode is now BAR\n\r");
+        break;
+    case '2':
+        mode = WAVE;
+        fillScreen(BLACK);
+        Report("Mode is now WAVE\n\r");
+        break;
+    case '3':
+        mode = PULSE;
+        fillScreen(BLACK);
+        Report("Mode is now PULSE\n\r");
+        break;
+    default:
+        break;
+    }
+}
+
 
 //*****************************************************************************
 //
@@ -144,14 +143,16 @@ InitSPI(void) {
 static void
 BoardInit(void)
 {
+
+    PRCMCC3200MCUInit();
 /* In case of TI-RTOS vector table is initialize by OS itself */
 #ifndef USE_TIRTOS
     //
     // Set vector table base
     //
-#if defined(ccs)
+//#if defined(ccs)
     MAP_IntVTableBaseSet((unsigned long)&g_pfnVectors[0]);
-#endif
+//#endif
 #if defined(ewarm)
     MAP_IntVTableBaseSet((unsigned long)&__vector_table);
 #endif
@@ -162,8 +163,6 @@ BoardInit(void)
     //
     MAP_IntMasterEnable();
     MAP_IntEnable(FAULT_SYSTICK);
-
-    PRCMCC3200MCUInit();
 }
 //****************************************************************************
 //                           MAIN FUNCTION
@@ -183,11 +182,9 @@ main()
     // Display banner and usage message
     DisplayBanner();
 
-    InitSystick();
-
     SetupADCMic(ADC_SAMPLE_RATE);
 
-    StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
+    InitSystick();
 
     // Initialize all the Fast Fourier Transform stuff
     InitFFT();
@@ -197,10 +194,12 @@ main()
 
     fillScreen(BLACK);
 
+    StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
+
 
 
     // Set up the bars and peaks here before the loop
-    uint8_t num_bins = 3;
+    uint8_t num_bins = 16;
     q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
     fillScreen(BLACK);
@@ -209,6 +208,7 @@ main()
     while(1)
     {
         ButtonPress(ChangeMode);
+
         int readyBuffer = CheckBufferReady();
         if (readyBuffer == BUFFER_PING) {
             ProcessAudioFrame(g_ping, frequency_magnitudes);
@@ -225,8 +225,7 @@ main()
             ClearBufferFlag(BUFFER_PONG);
         }
         else if (readyBuffer == -1){
-            Report("ERROR: System Overrun detected! Math or UART is too slow.\n\r");
-//            PrintADCHealth();
+            ClearOverrunFlag();
         }
 
 

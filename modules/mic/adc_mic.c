@@ -44,6 +44,10 @@ void ADCIntHandler() {
 
     if ((g_activeBuffer == 0 && g_bPingReady) || (g_activeBuffer == 1 && g_bPongReady)) {
         g_bSoftwareOverrun = 1; // New flag: CPU is too slow!
+
+        // This clears the hardware flag so we don't get trapped in an infinite loop!
+        MAP_ADCFIFORead(ADC_BASE, ADC_CH_1);
+
         return; // Drop this sample to avoid corrupting the buffer being read by FFT
     }
 
@@ -147,4 +151,8 @@ int CheckBufferReady() {
 void ClearBufferFlag(int buffer_id) {
     if (buffer_id == BUFFER_PING) g_bPingReady = 0;
     if (buffer_id == BUFFER_PONG) g_bPongReady = 0;
+}
+
+void ClearOverrunFlag() {
+    g_bOverrunOccurred = 0;
 }

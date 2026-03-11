@@ -11,6 +11,7 @@
 
 #include "oled.h"
 #include "binning/binning.h"
+#include "ir_buttons/ir_buttons.h"
 
 #define BASE_CHAR_SCALE 6
 #define BASE_LINE_WIDTH 8
@@ -390,6 +391,7 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
         // Grab the peak for this specific wave but divide by 2 so the wave doesn't
         // immediately clip off the top/bottom of the screen.
         q15_t amplitude = bin_peaks[w] / 2;
+        if (amplitude < 2) continue;
 
         // Space the frequencies out slightly so they don't perfectly overlap
         float frequency = 0.08f + (0.01f * w);
@@ -397,7 +399,7 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
         // Shift each wave's starting phase so they look layered
         float wave_shift = phase_offset + (w * 1.0f);
 
-        int prev_y = -1;
+//        int prev_y = -1;
         int x;
 
         // Choose a "base" color based on the bass, mid, treble split
@@ -419,10 +421,14 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
         // Plot the curve pixel-column by pixel-column
         for (x = 0; x < OLED_DIM; x++) {
 
-            float angle = (frequency * x) + wave_shift;
+            q15_t angle = (frequency * x) + wave_shift;
+            q15_t q15_angle = (q15_t)( (angle / TWO_PI) * 65535.0f - 32768.0f ); // This maps 0 -> 2*PI to -32768 -> 32767.
+
+            // This returns a value between -32768 and 32767.
+            q15_t sin_val = arm_sin_q15(q15_angle);
 
             // Calculate Y. We add (height / 2) to perfectly center the baseline.
-            int y = (OLED_DIM / 2) + (int)(amplitude * sinf(angle));
+            int y = (OLED_DIM / 2) + ((amplitude * sin_val) >> 15); // shifts the Q15 result back to pixel space.
 
             // Safety bounds check so we don't draw off the screen
             if (y < 0) y = 0;
@@ -430,8 +436,14 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
 
             if (x > 0) {
 
+                int old_y = old_y_coords[w][x];
+                int center = OLED_DIM / 2;
+
                 // Erase (Draw over the exact line from the LAST frame in BLACK)
-                drawLine(x - 1, old_y_coords[w][x - 1], x, old_y_coords[w][x], BLACK);
+                if (old_y < center)
+                    drawFastVLine(x, old_y, center - old_y, BLACK);
+                else
+                    drawFastVLine(x, center, old_y - center, BLACK);
 
                 // Apply y-axis gradient
                 // Red and Green fade to 0 (Black) at the bottom
@@ -444,12 +456,16 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
                 // Generate the 16-bit RGB565 color on the fly
                 unsigned int dynamic_color = Color565(final_r, final_g, final_b);
 
-                // Draw a tiny line segment connecting the previous point to this point
-                drawLine(x - 1, prev_y, x, y, dynamic_color);
+                // DrawFastVLine is a lot faster
+                // This fills the space between the center and the peak
+                if (y < center)
+                    drawFastVLine(x, y, center - y, dynamic_color);
+                else
+                    drawFastVLine(x, center, y - center, dynamic_color);
             }
             // Save this new Y-coordinate so we can erase it NEXT frame
             old_y_coords[w][x] = y;
-            prev_y = y; // Save current Y for the next loop iteration
+//            prev_y = y; // Save current Y for the next loop iteration
         }
     }
 }
@@ -471,3 +487,34 @@ void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
     }
 
 }
+
+
+//if (x > 0) {
+//
+//    int old_y = old_y_coords[w][x];
+//    int center = OLED_DIM / 2;
+//
+//    // Erase (Draw over the exact line from the LAST frame in BLACK)
+//    if (old_y < center)
+//        drawFastVLine(x, old_y, center - old_y, BLACK);
+//    else
+//        drawFastVLine(x, center, old_y - center, BLACK);
+//
+//    // Apply y-axis gradient
+//    // Red and Green fade to 0 (Black) at the bottom
+//    unsigned char final_r = FADE_TO_BLACK(r_base, y, max_y);
+//    unsigned char final_g = FADE_TO_BLACK(g_base, y, max_y);
+//
+//    // Blue blends from its base color down to 255 (Solid Blue) at the bottom
+//    unsigned char final_b = BLEND_TO_TARGET(b_base, 255, y, max_y);
+//
+//    // Generate the 16-bit RGB565 color on the fly
+//    unsigned int dynamic_color = Color565(final_r, final_g, final_b);
+//
+//    // DrawFastVLine is a lot faster
+//    // This fills the space between the center and the peak
+//    if (y < center)
+//        drawFastVLine(x, y, center - y, dynamic_color);
+//    else
+//        drawFastVLine(x, center, y - center, dynamic_color);
+//}
