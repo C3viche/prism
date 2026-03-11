@@ -107,7 +107,7 @@ InitSPI(void) {
     Adafruit_Init();
 }
 
-static void
+void
 ChangeMode(char c) {
     switch (c) {
     case '1':
@@ -199,7 +199,7 @@ main()
 
 
     // Set up the bars and peaks here before the loop
-    uint8_t num_bins = 8;
+    uint8_t num_bins = 16;
     q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
     fillScreen(BLACK);

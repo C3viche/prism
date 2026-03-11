@@ -19,12 +19,12 @@
 #define MAX_POSSIBLE_BARS 64
 #define MIN_POSSIBLE_BARS 3
 
-#define MUSICAL_MAX_FREQ 3000.0f
+#define MUSICAL_MAX_FREQ 4000.0f
 
 // Automatically calculates to 255.0f for a 512-point FFT
 // Formula: (FFT_SIZE / 2) - 1
 #define MAX_BIN_INDEX (MUSICAL_MAX_FREQ / ( (float)ADC_SAMPLE_RATE / (float)FFT_SIZE ))
-#define MIN_BIN_INDEX 4.0f // skips first 125 Hz
+#define MIN_BIN_INDEX 8.0f // skips first 250 Hz
 
 // Shared functions
 void BinPeaks(q15_t frequency_magnitudes[FFT_SIZE / 2], uint8_t num_bars, q15_t* bin_peaks);

@@ -16,6 +16,9 @@
 #define BASE_CHAR_SCALE 6
 #define BASE_LINE_WIDTH 8
 
+extern mode_t mode;
+extern void ChangeMode(char c);
+
 // static float p = 3.1415926;
 
 //*****************************************************************************
@@ -367,109 +370,97 @@ static void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, uns
 extern unsigned int Color565(unsigned char r, unsigned char g, unsigned char b);
 
 static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
-
-    // This permanently remembers the exact Y-coordinate of every pixel from the previous frame.
     static uint8_t old_y_coords[MAX_POSSIBLE_BARS][OLED_DIM] = {0};
+    int center = OLED_DIM / 2;
     int max_y = OLED_DIM - 1;
 
-    // The Animation Engine (Phase Shift)
-    // Static makes it remember its value between frames
     static float phase_offset = 0.0f;
-
-    // Increase this to make the waves scroll left faster (Direction of Travel)
     phase_offset += PHASE_TRAVEL;
+    if (phase_offset > TWO_PI) phase_offset -= TWO_PI;
 
-    // Prevent floating-point overflow by wrapping at 2*PI
-    if (phase_offset > TWO_PI) {
-        phase_offset -= TWO_PI;
-    }
-
-    // Draw each wave
+    int x;
     size_t w;
+
+    // My final attempt at making this as fast and reactive as possible
+    // --- PRE-COMPUTATIONS ---
+    // Calculate all the heavy math ONCE per wave, not 128 times per wave!
+    q15_t wave_amps[MAX_POSSIBLE_BARS];
+    q15_t current_phases[MAX_POSSIBLE_BARS];
+    q15_t phase_steps[MAX_POSSIBLE_BARS];
+
+    unsigned char r_bases[MAX_POSSIBLE_BARS];
+    unsigned char g_bases[MAX_POSSIBLE_BARS];
+    unsigned char b_bases[MAX_POSSIBLE_BARS];
+
     for (w = 0; w < num_waves; w++) {
+        wave_amps[w] = bin_peaks[w] / 2;
 
-        // Grab the peak for this specific wave but divide by 2 so the wave doesn't
-        // immediately clip off the top/bottom of the screen.
-        q15_t amplitude = bin_peaks[w] / 2;
-        if (amplitude < 2) continue;
-
-        // Space the frequencies out slightly so they don't perfectly overlap
         float frequency = 0.08f + (0.01f * w);
-
-        // Shift each wave's starting phase so they look layered
         float wave_shift = phase_offset + (w * 1.0f);
 
-        int prev_y = -1;
-        int x;
+        // Convert starting position and step size to Q15 integers immediately
+        current_phases[w] = (q15_t)((int32_t)(wave_shift * 10430.37f));
+        phase_steps[w]    = (q15_t)((int32_t)(frequency * 10430.37f));
 
-        // Choose a "base" color based on the bass, mid, treble split
+        // Pre-extract colors
         unsigned int base_color;
-        if (w < (num_waves * BASS)) {
-            base_color = color1; // Bass
-        } else if (w < (num_waves * MID)) {
-            base_color = color2; // Mids
-        } else {
-            base_color = color3; // Treble
+        if (w < (num_waves * BASS)) base_color = color1;
+        else if (w < (num_waves * MID)) base_color = color2;
+        else base_color = color3;
+
+        r_bases[w] = EXTRACT_RED(base_color);
+        g_bases[w] = EXTRACT_GREEN(base_color);
+        b_bases[w] = EXTRACT_BLUE(base_color);
+    }
+    // --------------------------------------------
+
+    for (x = 0; x < OLED_DIM; x++) {
+
+        // Yield for remote interrupt
+        ButtonPress(ChangeMode);
+        if (mode != WAVE) return;
+
+        // ERASE PHASE
+        for (w = 0; w < num_waves; w++) {
+            int old_y = old_y_coords[w][x];
+            if (old_y <= center) {
+                drawFastVLine(x, old_y, center - old_y + 1, BLACK);
+            } else {
+                drawFastVLine(x, center, old_y - center + 1, BLACK);
+            }
         }
 
-        // Extract the 8-bit R, G, and B components from the 16-bit color
-        // We shift the bits down and multiply them to get them back to the standard 0-255 range
-        unsigned char r_base = EXTRACT_RED(base_color);
-        unsigned char g_base = EXTRACT_GREEN(base_color);
-        unsigned char b_base = EXTRACT_BLUE(base_color);
+        // DRAW PHASE
+        for (w = 0; w < num_waves; w++) {
 
-        // Plot the curve pixel-column by pixel-column
-        for (x = 0; x < OLED_DIM; x++) {
+            // Advance the phase even if silent, so the wave doesn't desync!
+            q15_t this_phase = current_phases[w];
+            current_phases[w] += phase_steps[w]; // 1-cycle integer addition!
 
-            float angle = (frequency * (float)x) + wave_shift;
-            int32_t full_phase = (int32_t)(angle * 10430.37f); // This maps 0 -> 2*PI to -32768 -> 32767.
+            if (wave_amps[w] < 2) continue; // Skip drawing silence
 
-            // This returns a value between -32768 and 32767.
-            q15_t q15_phase = (q15_t)full_phase;
-            q15_t sin_val = arm_sin_q15(q15_phase);
+            // Pure integer CMSIS-DSP sine lookup
+            q15_t sin_val = arm_sin_q15(this_phase);
 
-            // Calculate Y. We add (height / 2) to perfectly center the baseline.
-            int offset = (int)((int32_t)amplitude * sin_val >> 15);
-            int y = (OLED_DIM / 2) + offset; // shifts the Q15 result back to pixel space.
+            int offset = (int)((int32_t)wave_amps[w] * sin_val >> 15);
+            int y = center + offset;
 
-            // Safety bounds check so we don't draw off the screen
             if (y < 0) y = 0;
             if (y >= OLED_DIM) y = max_y;
 
-            if (x > 0) {
+            // Apply Y-axis gradient using pre-extracted bases
+            unsigned char final_r = FADE_TO_BLACK(r_bases[w], y, max_y);
+            unsigned char final_g = FADE_TO_BLACK(g_bases[w], y, max_y);
+            unsigned char final_b = BLEND_TO_TARGET(b_bases[w], 255, y, max_y);
+            unsigned int dynamic_color = Color565(final_r, final_g, final_b);
 
-//                int old_y = old_y_coords[w][x];
-//                int center = OLED_DIM / 2;
-
-                // Erase (Draw over the exact line from the LAST frame in BLACK)
-//                if (old_y < center)
-//                    drawFastVLine(x, old_y, center - old_y, BLACK);
-//                else
-//                    drawFastVLine(x, center, old_y - center, BLACK);
-                drawLine(x - 1, old_y_coords[w][x - 1], x, old_y_coords[w][x], BLACK);
-
-                // Apply y-axis gradient
-                // Red and Green fade to 0 (Black) at the bottom
-                unsigned char final_r = FADE_TO_BLACK(r_base, y, max_y);
-                unsigned char final_g = FADE_TO_BLACK(g_base, y, max_y);
-
-                // Blue blends from its base color down to 255 (Solid Blue) at the bottom
-                unsigned char final_b = BLEND_TO_TARGET(b_base, 255, y, max_y);
-
-                // Generate the 16-bit RGB565 color on the fly
-                unsigned int dynamic_color = Color565(final_r, final_g, final_b);
-
-                // DrawFastVLine is a lot faster
-                // This fills the space between the center and the peak
-//                if (y < center)
-//                    drawFastVLine(x, y, center - y, dynamic_color);
-//                else
-//                    drawFastVLine(x, center, y - center, dynamic_color);
-                drawLine(x - 1, prev_y, x, y, dynamic_color);
+            if (y <= center) {
+                drawFastVLine(x, y, center - y + 1, dynamic_color);
+            } else {
+                drawFastVLine(x, center, y - center + 1, dynamic_color);
             }
-            // Save this new Y-coordinate so we can erase it NEXT frame
+
             old_y_coords[w][x] = y;
-            prev_y = y; // Save current Y for the next loop iteration
         }
     }
 }
@@ -477,7 +468,7 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
 static void DrawPulse(size_t num_bins, q15_t* bin_peaks) {
     static uint8_t old_r_bass = 0, old_r_mid = 0, old_r_treble = 0;
 
-        // 1. Calculate Averages for the 3 Frequency Zones
+        // Calculate Averages for the 3 Frequency Zones
         // BASS: First 20% of the bars
         int32_t bass_sum = 0;
         int bass_end = (num_bins * 2) / 10;
@@ -500,12 +491,16 @@ static void DrawPulse(size_t num_bins, q15_t* bin_peaks) {
         for(i = treb_start; i < num_bins; i++) { treb_sum += bin_peaks[i]; }
         int32_t treb_e = treb_sum / (num_bins - treb_start);
 
-        // 2. Map to Radii using PULSE_BOOST
+        // Map to Radii using PULSE_BOOST
         uint8_t r_bass   = (bass_e * PULSE_BOOST) / MAX_MAGNITUDE;
-        uint8_t r_mid    = (mid_e  * 40) / MAX_MAGNITUDE;
-        uint8_t r_treble = (treb_e * 25) / MAX_MAGNITUDE; // Slightly larger for visibility
+        uint8_t r_mid    = (mid_e  * 55) / MAX_MAGNITUDE;
+        uint8_t r_treble = (treb_e * 35) / MAX_MAGNITUDE; // Slightly larger for visibility
 
-        // 3. Erase and Draw (Dirty Overwrite)
+        if (r_bass > 63) r_bass = 63;
+        if (r_mid > 63) r_mid = 63;
+        if (r_treble > 63) r_treble = 63;
+
+        // Erase and Draw (Dirty Overwrite)
         if (old_r_bass != r_bass)     drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_bass, BLACK);
         if (old_r_mid != r_mid)       drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_mid, BLACK);
         if (old_r_treble != r_treble) drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_treble, BLACK);

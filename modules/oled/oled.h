@@ -51,7 +51,7 @@
 
 // Math Constants
 #define TWO_PI 6.28318f
-#define PHASE_TRAVEL 0.5f
+#define PHASE_TRAVEL 0.08f
 
 // Useful color macros
 #define EXTRACT_RED(color)   ((((color) >> 11) & 0x1F) << 3)
@@ -65,7 +65,7 @@
 #define BLEND_TO_TARGET(base, target, y, max_y) ((((base) * ((max_y) - (y))) + ((target) * (y))) / (max_y))
 
 // The factor to make the pulse amplitude bigger
-#define PULSE_BOOST 62
+#define PULSE_BOOST 80
 
 // Custom functions
 void drawFontTable(int x, int y, unsigned int color, unsigned int bg, unsigned char size);

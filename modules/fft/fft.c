@@ -29,18 +29,26 @@ InitFFT(void) {
 
 }
 
+static void ApplyPreEmphasis(q15_t frequency_magnitudes[FFT_SIZE/2]) {
+    int i;
+    for(i = 1; i < FFT_SIZE / 2; i++) {
+        // Boost the raw high frequencies so they survive the noise gate
+        // Using 30.0f to keep it calm so waves don't go ballistic
+        float treble_boost = 1.0f + ((float)i / 30.0f);
+
+        // Multiply in 32-bit space to prevent overflow before casting back
+        int32_t boosted_mag = (int32_t)(frequency_magnitudes[i] * treble_boost);
+        frequency_magnitudes[i] = (q15_t)boosted_mag;
+    }
+}
+
 // Scale the magnitudes to a reasonable "height" for the oled
 static void
 ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
     int i;
     for(i = 1; i < FFT_SIZE / 2; i++) {
-        // Use a 32-bit integer for the dangerous magnitude multiplication
-        int32_t raw_mag = frequency_magnitudes[i];
 
-//        float treble_boost = 1.0f + ((float)i / 20.0f);
-//        raw_mag = (int32_t)(raw_mag * treble_boost);
-
-        int32_t scaled_mag = raw_mag * OLED_SCALE;
+        int32_t scaled_mag = frequency_magnitudes[i] * OLED_SCALE;
 
 
         // Cap it BEFORE it has a chance to overflow the final calculation
@@ -81,11 +89,15 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
     // frequency_magnitudes[1] up to ~10 might be heavy bass frequencies.
     // frequency_magnitudes[200+] could be high treble.
 
+    // Boost the raw treble so it survives the noise gate
+    ApplyPreEmphasis(frequency_magnitudes);
+
     // Apply the DSP filtering to smoothen out sound ranges
     ApplyDSPFilters(frequency_magnitudes, FFT_SIZE / 2);
 
-    // TODO: Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
+    // Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
     ScaleMagnitudes(frequency_magnitudes);
+
 
 }
 
