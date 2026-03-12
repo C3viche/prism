@@ -50,6 +50,14 @@ extern void (* const g_pfnVectors[])(void);
 extern uVectorEntry __vector_table;
 #endif
 
+
+volatile bool esp32_connected = false;
+volatile bool g_timeout_reached = true;
+
+ uint16_t color1 = 0x07E0; // GREEN
+ uint16_t color2 = 0xFD20; // ORANGE
+ uint16_t color3 = 0x8010; // PURPLE
+
 q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
 q15_t audio_inputs[FFT_SIZE];            // Raw ADC microphone readings
 
@@ -120,8 +128,43 @@ static void InitUart(){
                            UART_CONFIG_PAR_NONE));
 }
 
+
+void TimerTimeoutHandler(void) {
+    // Clear the interrupt flag so it doesn't fire again immediately
+    MAP_TimerIntClear(TIMERA0_BASE, TIMER_TIMA_TIMEOUT);
+
+    // Set our software flag
+    g_timeout_reached = true;
+
+    // Disable the timer so it doesn't keep running
+    MAP_TimerDisable(TIMERA0_BASE, TIMER_A);
+}
+
+
+void StartTimeoutTimer(unsigned long msecs) {
+    // Enable the peripheral clock
+    MAP_PRCMPeripheralClkEnable(PRCM_TIMERA0, PRCM_RUN_MODE_CLK);
+    MAP_PRCMPeripheralReset(PRCM_TIMERA0);
+
+    // Configure as a one-shot 32-bit timer
+    MAP_TimerConfigure(TIMERA0_BASE, TIMER_CFG_ONE_SHOT);
+
+    // Load the 2-second value (80Mhz * seconds)
+    MAP_TimerLoadSet(TIMERA0_BASE, TIMER_A, 80000000 * (msecs / 1000));
+
+    // Register the interrupt handler
+    MAP_TimerIntRegister(TIMERA0_BASE, TIMER_A, TimerTimeoutHandler);
+
+    // Enable the timeout interrupt
+    MAP_TimerIntEnable(TIMERA0_BASE, TIMER_TIMA_TIMEOUT);
+
+    // Start the timer
+    MAP_TimerEnable(TIMERA0_BASE, TIMER_A);
+}
+
+
 void
-ChangeMode(char c) {
+ChangeMode(char c ) {
     switch (c) {
     case '1':
         mode = BAR;
@@ -140,7 +183,50 @@ ChangeMode(char c) {
         break;
     case '4':
         // GET request to load configuration
-        break;
+        if (esp32_connected){
+
+
+           const char *pMsg = "GET_AWS\n";
+           const char *t;
+
+           for (t = pMsg; *t != '\0'; t++) {
+                      Uart1PutChar(*t);
+              }
+
+           char GET_buffer[512];
+
+
+           uint8_t num_bins = 16;
+
+           uint8_t gravity_shift = 4;
+
+           // Copy current colors
+           uint16_t c1 = color1 ; // GREEN
+           uint16_t c2 = color2; // ORANGE
+           uint16_t c3 = color3; // PURPLE
+
+           uint16_t rate = 0;
+
+           CC3200_Data aws_data = { num_bins, c1, c2, c3, gravity_shift, rate };
+
+           while(!g_timeout_reached) {
+
+               // Check uART
+               if (FetchInputNonBlocking(GET_buffer)) {
+                   if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
+                         color1 = aws_data.c1;
+                         color2 = aws_data.c2;
+                         color3 = aws_data.c3;
+
+                       MAP_TimerDisable(TIMERA0_BASE, TIMER_A);
+                       break;
+                   } else {
+                       Report("Invalid Data received\n");
+                   }
+               }
+           }
+        }
+       break;
     case '5':
         // POST request to save current configuration
         break;
@@ -221,7 +307,7 @@ main()
 
 
 
-    bool esp32_connected = false;
+     esp32_connected = false;
 
     uint8_t num_bins = 16;
     uint8_t gravity_shift = 4;
@@ -288,10 +374,6 @@ main()
 
     SetupADCMic(ADC_SAMPLE_RATE);
     StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
-
-    if (esp32_connected){
-
-    }
 
 
     while(1)

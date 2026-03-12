@@ -417,7 +417,7 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, uint16_t color1, uint1
     for (x = 0; x < OLED_DIM; x++) {
 
         // Yield for remote interrupt
-        ButtonPress(ChangeMode);
+        ButtonPress(ChangeMode); // TEMP CHANGE
         if (mode != WAVE) return;
 
         // ERASE PHASE
