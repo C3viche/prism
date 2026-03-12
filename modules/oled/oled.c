@@ -505,9 +505,9 @@ static void DrawPulse(size_t num_bins, q15_t* bin_peaks) {
         if (old_r_mid != r_mid)       drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_mid, BLACK);
         if (old_r_treble != r_treble) drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_treble, BLACK);
 
-        drawCircle(OLED_DIM/2, OLED_DIM/2, r_bass,   BASS_COLOR);
-        drawCircle(OLED_DIM/2, OLED_DIM/2, r_mid,    MID_COLOR);
-        drawCircle(OLED_DIM/2, OLED_DIM/2, r_treble, TREBLE_COLOR);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_bass,   GREEN);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_mid,    ORANGE);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_treble, PURPLE);
 
         old_r_bass = r_bass; old_r_mid = r_mid; old_r_treble = r_treble;
 }
@@ -515,10 +515,10 @@ static void DrawPulse(size_t num_bins, q15_t* bin_peaks) {
 void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
     switch (mode) {
     case BAR:
-        DrawBars(num_bins, bin_peaks, BASS_COLOR, MID_COLOR, TREBLE_COLOR);
+        DrawBars(num_bins, bin_peaks, GREEN, ORANGE, PURPLE);
         break;
     case WAVE:
-        DrawWaves(num_bins, bin_peaks, BASS_COLOR, MID_COLOR, TREBLE_COLOR);
+        DrawWaves(num_bins, bin_peaks, GREEN, ORANGE, PURPLE);
         break;
     case PULSE:
         DrawPulse(num_bins, bin_peaks);
