@@ -197,7 +197,7 @@ int ProcessIncomingData(char *msg, CC3200_Data *data) {
 
 
 int CheckStatus(char *msg) {
-    if (strncmp(msg, "ESP32CONNECTED", 14) == 0) {
+    if (strncmp(msg, "ESPCON", 6) == 0) {
 
         return 0;
     } else{

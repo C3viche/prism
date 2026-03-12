@@ -214,7 +214,6 @@ main()
 
     MAP_UtilsDelay(80000000);
     // Start up Uart
-    MAP_UtilsDelay(80000000);
     InitUart();
 
 
@@ -242,7 +241,8 @@ main()
     CC3200_Data aws_data = { num_bins, color1, color2, color3, gravity_shift, rate };
     aws_data = aws_data;
 
-    const char *pMsg = "GET_AWS\n";
+//    const char *pMsg = "GET_AWS\n";
+    const char *pMsg = "STATUS\n";
     const char *t;
 
     char GET_buffer[512];
@@ -255,23 +255,24 @@ main()
     Message("Status: sent message to ESP32...\n\r");
 
     int timeout_count = 0;
-    int max_timeout = 3000;
+    int max_timeout = 30000;
 
 
     while(timeout_count < max_timeout) {
-        MAP_UtilsDelay(1000);
+//        MAP_UtilsDelay(1000);
         if (FetchInputNonBlocking(GET_buffer)) {
+            Report("Got something \n");
             // Once we have a string, parse it
             if ( CheckStatus(GET_buffer) == 0){
-
+                ;
                 esp32_connected = true;
-                Report("ESP 32 connection checked and verified");
+                Report("ESP 32 connection checked and verified \n");
                 break; // End startup loop
             } else{
                 Report("Unable to verify validity of esp32");
             }
         }
-        MAP_UtilsDelay(80000 / 3);
+        MAP_UtilsDelay(8000 / 3);
         timeout_count++;
 
         if (timeout_count >= max_timeout) {
