@@ -182,6 +182,7 @@ BoardInit(void)
 int
 main()
 {
+
     // Initialize Board configurations
     BoardInit();
 
@@ -204,7 +205,7 @@ main()
     // Set up SPI for communications with OLED
     InitSPI();
 
-
+    MAP_UtilsDelay(80000000);
     // Start up Uart
     InitUart();
 
@@ -213,7 +214,14 @@ main()
 
     StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
 
-
+    CC3200_Data cc3200_data = {
+        num_bins,
+        gravity_shift,
+        color1,
+        color2,
+        color3,
+        rate
+    };
 
     const char *pMsg = "GET_AWS\n";
     const char *t;
