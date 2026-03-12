@@ -138,6 +138,8 @@ void TimerTimeoutHandler(void) {
 
     // Disable the timer so it doesn't keep running
     MAP_TimerDisable(TIMERA0_BASE, TIMER_A);
+
+    Report("TIMER HANDLER \n");
 }
 
 
@@ -160,6 +162,8 @@ void StartTimeoutTimer(unsigned long msecs) {
 
     // Start the timer
     MAP_TimerEnable(TIMERA0_BASE, TIMER_A);
+
+    Report("Started Timer \n");
 }
 
 
@@ -185,7 +189,7 @@ ChangeMode(char c ) {
         // GET request to load configuration
         if (esp32_connected){
 
-
+           Report("AWS Data Processing\n");
            const char *pMsg = "GET_AWS\n";
            const char *t;
 
@@ -208,15 +212,29 @@ ChangeMode(char c ) {
            uint16_t rate = 0;
 
            CC3200_Data aws_data = { num_bins, c1, c2, c3, gravity_shift, rate };
-
+           g_timeout_reached = false;
+           StartTimeoutTimer(10000);
            while(!g_timeout_reached) {
 
                // Check uART
+               if (MAP_UARTCharsAvail(UART1BASE)) {
+                    Report("."); // Heartbeat to show UART is alive
+               }
+
+
                if (FetchInputNonBlocking(GET_buffer)) {
-                   if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
+                   Report("Raw String Received: [%s]\n", GET_buffer);
+
+                   if (ProcessIncomingData(GET_buffer, &aws_data) == 0){
+                       Report("AWS Data received\n");
                          color1 = aws_data.c1;
                          color2 = aws_data.c2;
                          color3 = aws_data.c3;
+
+                         // Full reset of samples
+                         memset(g_ping, 0, sizeof(g_ping));
+                         memset(g_pong, 0, sizeof(g_pong));
+                         StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
 
                        MAP_TimerDisable(TIMERA0_BASE, TIMER_A);
                        break;
@@ -311,9 +329,6 @@ main()
 
     uint8_t num_bins = 16;
     uint8_t gravity_shift = 4;
-    uint16_t color1 = 0x07E0; // GREEN
-    uint16_t color2 = 0xFD20; // ORANGE
-    uint16_t color3 = 0x8010; // PURPLE
     uint16_t rate = 0;
 //    char rate[16];
 //

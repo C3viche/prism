@@ -86,9 +86,9 @@ int FetchInput(char * finalMsg){
 
 // Nonblociking
 int FetchInputNonBlocking(char * finalMsg){
-    char g_rxBuffer[512];
+    static char g_rxBuffer[512];
 
-    int rxIndex = 0;
+    static int rxIndex = 0;
     char c;
 //    drawString(10, 60, "GOT MESSAGE!", WHITE, BLACK, 1);
     while (UartCharsAvail()) {
