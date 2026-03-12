@@ -58,6 +58,18 @@ volatile bool g_timeout_reached = true;
  uint16_t color2 = 0xFD20; // ORANGE
  uint16_t color3 = 0x8010; // PURPLE
 
+
+
+static const uint16_t color_palette[] = {
+     RED, GREEN, BLUE,
+     CYAN, MAGENTA, YELLOW,
+     ORANGE, PINK, PURPLE,
+     LIME, NAVY, TEAL,
+     WHITE, GREY, BLACK
+ };
+
+#define NUM_COLORS (sizeof(color_palette) / sizeof(color_palette[0]))
+
 q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
 q15_t audio_inputs[FFT_SIZE];            // Raw ADC microphone readings
 
@@ -81,8 +93,22 @@ DisplayBanner()
     Report("\n\n\n\r");
 }
 
-static void
-InitSPI(void) {
+
+
+
+uint16_t GetNextColor(void) {
+    static int color_index = 0; // Remembers its value between calls
+
+    uint16_t selected_color = color_palette[color_index];
+
+    // Move to the next index, or wrap back to 0 if at the end
+    color_index = (color_index + 1) % NUM_COLORS;
+
+    return selected_color;
+}
+
+
+static void InitSPI(void) {
 
     //
     // Enable the SPI module clock
@@ -167,6 +193,14 @@ void StartTimeoutTimer(unsigned long msecs) {
 }
 
 
+void FormatAWSMessage(char *dest, int size, uint8_t bars, uint16_t c1, uint16_t c2, uint16_t c3, uint8_t grav, uint16_t rate) {
+
+    // snprintf ensures we don't exceed the 'size' of the destination buffer
+    // %u is for unsigned int, %04X prints hex with 4 digits (e.g., 0x07E0)
+    snprintf(dest, size, "SEND_AWS <%u, 0x%04X, 0x%04X, 0x%04X, %u, %u>\n",
+             bars, c1, c2, c3, grav, rate);
+}
+
 void
 ChangeMode(char c ) {
     switch (c) {
@@ -247,7 +281,31 @@ ChangeMode(char c ) {
        break;
     case '5':
         // POST request to save current configuration
+
         break;
+    case '7':
+            // POST request to save current configuration
+            color1 = GetNextColor();
+            break;
+    case '8':
+            // POST request to save current configuration
+            color2 = GetNextColor();
+            break;
+    case '9':
+          // POST request to save current configuration
+            color3 = GetNextColor();
+          break;
+    case '-': {
+        char SEND_buffer[512];
+        FormatAWSMessage(SEND_buffer, 512,  12, color1, color2, color3, 12, 400);
+        const char *t;
+
+        for (t = SEND_buffer; *t != '\0'; t++) {
+                  Uart1PutChar(*t);
+          }
+        break;
+    }
+
     default:
         break;
     }
@@ -329,7 +387,7 @@ main()
 
     uint8_t num_bins = 16;
     uint8_t gravity_shift = 4;
-    uint16_t rate = 0;
+//    uint16_t rate = 0;
 //    char rate[16];
 //
 //    if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
@@ -338,9 +396,6 @@ main()
 //                  color3 = aws_data.c3;
 
   
-
-    CC3200_Data aws_data = { num_bins, color1, color2, color3, gravity_shift, rate };
-    aws_data = aws_data;
 
 //    const char *pMsg = "GET_AWS\n";
     const char *pMsg = "STATUS\n";
