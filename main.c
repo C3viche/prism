@@ -57,6 +57,8 @@ volatile bool g_timeout_reached = true;
  uint16_t color1 = 0x07E0; // GREEN
  uint16_t color2 = 0xFD20; // ORANGE
  uint16_t color3 = 0x8010; // PURPLE
+ uint8_t num_bins = 16;
+uint8_t gravity_shift = 4;
 
 
 
@@ -297,7 +299,7 @@ ChangeMode(char c ) {
           break;
     case '-': {
         char SEND_buffer[512];
-        FormatAWSMessage(SEND_buffer, 512,  12, color1, color2, color3, 12, 400);
+        FormatAWSMessage(SEND_buffer, 512,  num_bins, color1, color2, color3, gravity_shift, 400);
         const char *t;
 
         for (t = SEND_buffer; *t != '\0'; t++) {
@@ -385,8 +387,7 @@ main()
 
      esp32_connected = false;
 
-    uint8_t num_bins = 16;
-    uint8_t gravity_shift = 4;
+
 //    uint16_t rate = 0;
 //    char rate[16];
 //
