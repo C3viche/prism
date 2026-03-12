@@ -81,7 +81,7 @@
 
 }
 
-int ProcessIncomingData(char *msg) {
+int ProcessIncomingData(char *msg, CC3200_Data *data) {
     // Check for our specific header
     if (strncmp(msg, "DATA<", 5) == 0) {
         char *ptr = msg + 5; // Start after 'DATA<'
@@ -114,28 +114,46 @@ int ProcessIncomingData(char *msg) {
 
         // Apply only non-blank values to your system
         if (i == 6) {
-//            if (strlen(segments[0]) > 0) UpdateBars(segments[0]);
-//            if (strlen(segments[1]) > 0) UpdateColor1(segments[1]);
-//            if (strlen(segments[2]) > 0) UpdateColor2(segments[2]);
-//            if (strlen(segments[3]) > 0) UpdateColor3(segments[3]);
-//            if (strlen(segments[4]) > 0) UpdateGravity(segments[4]);
-//            if (strlen(segments[5]) > 0) UpdateRate(segments[5]);
             char statusReport[128] = "Update Summary: ";
 
-            // Process each and append a quick code to the report string
-            // [B]=Bars, [C]=Colors, [G]=Gravity, [R]=Rate
-            // An uppercase letter means Updated, lowercase or dot means Skipped
+            // BARS (String)
+            if (strlen(segments[0]) > 0) {
+                strncpy(data->bars, segments[0], 15);
+                data->bars[15] = '\0'; // Safety null terminator
+                strcat(statusReport, "Bars ");
+            }
 
-            if (strlen(segments[0]) > 0) {      strcat(statusReport, segments[0]); }
-            if (strlen(segments[1]) > 0) {    strcat(statusReport, segments[1]); }
-            if (strlen(segments[2]) > 0) {    strcat(statusReport, segments[2]); }
-            if (strlen(segments[3]) > 0) {   strcat(statusReport, segments[3]); }
-            if (strlen(segments[4]) > 0) {   strcat(statusReport, segments[4]); }
-            if (strlen(segments[5]) > 0) {     strcat(statusReport, segments[5]); }
+            // COLORS (Hex to Uint16)
+            if (strlen(segments[1]) > 0) {
+                data->c1 = (uint16_t)strtoul(segments[1], NULL, 16);
+                strcat(statusReport, "C1 ");
+            }
+            if (strlen(segments[2]) > 0) {
+                data->c2 = (uint16_t)strtoul(segments[2], NULL, 16);
+                strcat(statusReport, "C2 ");
+            }
+            if (strlen(segments[3]) > 0) {
+                data->c3 = (uint16_t)strtoul(segments[3], NULL, 16);
+                strcat(statusReport, "C3 ");
+            }
+
+            // GRAVITY (String)
+            if (strlen(segments[4]) > 0) {
+                strncpy(data->grav, segments[4], 15);
+                data->grav[15] = '\0';
+                strcat(statusReport, "Grav ");
+            }
+
+            // RATE (String)
+            if (strlen(segments[5]) > 0) {
+                strncpy(data->rate, segments[5], 15);
+                data->rate[15] = '\0';
+                strcat(statusReport, "Rate ");
+            }
 
             // Final consolidated report
             Report("\n\r%s - OK\n\r", statusReport);
-            Report("Parsing Complete. Non-blank fields updated.\n\r");
+            Report("Parsed Hex Colors: C1:0x%04X, C2:0x%04X, C3:0x%04X\n\r", data->c1, data->c2, data->c3);
             return 0;
         }
     }

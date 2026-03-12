@@ -37,10 +37,10 @@
 
 #define ADC_SAMPLE_RATE 16000
 
+// Remove it later
 #define UART1BASE                UARTA1_BASE
 #define UART1_PERIPH             PRCM_UARTA1
-#define UART1BASE                UARTA1_BASE
-#define UART1_PERIPH             PRCM_UARTA1
+
 #define Uart1GetChar()      MAP_UARTCharGet(UART1BASE)
 #define Uart1PutChar(c)     MAP_UARTCharPut(UART1BASE,c)
 

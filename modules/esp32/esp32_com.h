@@ -11,9 +11,9 @@
 // The Data Structure
 typedef struct {
     char bars[16];
-    char c1[16];
-    char c2[16];
-    char c3[16];
+    uint16_t c1;
+    uint16_t c2;
+    uint16_t c3;
     char grav[16];
     char rate[16];
 } CC3200_Data;
