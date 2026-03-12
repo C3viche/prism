@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 // Configuration
@@ -15,11 +16,11 @@ typedef struct {
     uint16_t c2;
     uint16_t c3;
     char grav[16];
-    char rate[16];
+    uint16_t rate;
 } CC3200_Data;
 
 // Library Functions
 int FetchInput(char *finalMsg);
-int ProcessIncomingData(char *msg);
+int ProcessIncomingData(char *msg, CC3200_Data *data);
 
 #endif // AWS_PARSER_H

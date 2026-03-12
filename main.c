@@ -226,16 +226,12 @@ main()
     uint16_t color1 = 0x07E0; // GREEN
     uint16_t color2 = 0xFD20; // ORANGE
     uint16_t color3 = 0x8010; // PURPLE
-    char rate[16];
+    uint16_t rate = 0;
+//    char rate[16];
   
-    CC3200_Data cc3200_data = {
-        num_bins,
-        gravity_shift,
-        color1,
-        color2,
-        color3,
-        rate
-    };
+
+    CC3200_Data aws_data = { num_bins, color1, color2, color3, gravity_shift, rate };
+
 
     const char *pMsg = "GET_AWS\n";
     const char *t;
@@ -253,10 +249,13 @@ main()
         MAP_UtilsDelay(1000);
         if (FetchInput(GET_buffer)) {
             // Once we have a string, parse it
-            int status = ProcessIncomingData(GET_buffer);
-            if (status == 0){
+            if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
+                color1 = aws_data.c1;
+                color2 = aws_data.c2;
+                color3 = aws_data.c3;
+
                 Report("SUCCESS!");
-                break;
+                break; // End startup loop
             } else{
                 Report("FAILED TO GET MESSAGE");
             }

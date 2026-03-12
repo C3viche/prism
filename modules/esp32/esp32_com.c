@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdlib.h>
 
 // Driverlib includes
 #include "hw_types.h"
@@ -22,6 +23,7 @@
 
 
 #include "mic/adc_mic.h"
+#include "esp32/esp32_com.h"
 
 
 #include "uart_if.h"
