@@ -111,10 +111,10 @@ InitSPI(void) {
 
 static void InitUart(){
 
-    while(!PRCMPeripheralStatusGet(UART1_PERIPH)) {
+    while(!PRCMPeripheralStatusGet(PRCM_UARTA1)) {
             // Wait for clock/reset to stabilize
         }
-    MAP_UARTConfigSetExpClk(UART1BASE, 80000000,
+    MAP_UARTConfigSetExpClk(UARTA1_BASE, 80000000,
                           UART_BAUD_RATE, (UART_CONFIG_WLEN_8 | UART_CONFIG_STOP_ONE |
                            UART_CONFIG_PAR_NONE));
 }
@@ -215,32 +215,32 @@ main()
 
 
 
-    const char *pMsg = "GET_AWS\n";
-    const char *t;
-
-    char GET_buffer[512];
-
-    for (t = pMsg; *t != '\0'; t++) {
-            Uart1PutChar(*t);
-//        Report("CHARACTER: %c ", *t);
-    }
-//    Uart1PutChar('\0');
-    Message("Status: sent message to ESP32...\n\r");
-
-    while(1) {
-        MAP_UtilsDelay(1000);
-        if (FetchInput(GET_buffer)) {
-            // Once we have a string, parse it
-            int status = ProcessIncomingData(GET_buffer);
-            if (status == 0){
-                Report("SUCCESS!");
-                break;
-            } else{
-                Report("FAILED TO GET MESSAGE");
-            }
-        }
-        Report("Incorrect message, retrying");
-    }
+//    const char *pMsg = "GET_AWS\n";
+//    const char *t;
+//
+//    char GET_buffer[512];
+//
+//    for (t = pMsg; *t != '\0'; t++) {
+//            Uart1PutChar(*t);
+////        Report("CHARACTER: %c ", *t);
+//    }
+////    Uart1PutChar('\0');
+//    Message("Status: sent message to ESP32...\n\r");
+//
+//    while(1) {
+//        MAP_UtilsDelay(1000);
+//        if (FetchInput(GET_buffer)) {
+//            // Once we have a string, parse it
+//            int status = ProcessIncomingData(GET_buffer);
+//            if (status == 0){
+//                Report("SUCCESS!");
+//                break;
+//            } else{
+//                Report("FAILED TO GET MESSAGE");
+//            }
+//        }
+//        Report("Incorrect message, retrying");
+//    }
 
 
     // Set up the bars and peaks here beforse the loop
