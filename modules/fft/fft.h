@@ -15,6 +15,6 @@
 #define OLED_SCALE 2
 
 void InitFFT(void);
-void ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2]);
+void ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2], uint8_t gravity_shift);
 
 #endif /* MODULES_FFT_FFT_H_ */

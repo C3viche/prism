@@ -25,8 +25,6 @@
 
 #define FFT_SIZE        512
 
-#define ADC_SAMPLE_RATE 16000
-
 #define WINDOW_SIZE 512
 
 #define OLED_DIM   128
@@ -36,6 +34,8 @@
 #define BUFFER_PONG  2
 
 #define MAX_MAGNITUDE   200
+
+#define ADC_SAMPLE_RATE 16000
 
 typedef enum modes {
     BAR,

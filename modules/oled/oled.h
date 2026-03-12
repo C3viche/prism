@@ -45,10 +45,6 @@
 #define NAVY            0x000F
 #define TEAL            0x0410
 
-#define BASS_COLOR GREEN
-#define MID_COLOR ORANGE
-#define TREBLE_COLOR YELLOW
-
 // Math Constants
 #define TWO_PI 6.28318f
 #define PHASE_TRAVEL 0.08f
@@ -73,6 +69,6 @@ void drawString(int x, int y, char *str, unsigned int color, unsigned int bg, un
 void drawHorizontalLines(unsigned int color);
 void drawVerticalLines(unsigned int color);
 
-void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks);
+void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks, uint16_t color1, uint16_t color2, uint16_t color3);
 
 #endif /* OLED_OLED_TEST_H_ */
