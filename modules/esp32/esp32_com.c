@@ -49,7 +49,7 @@
 #define SYS_CLK 80000000
 
 
- int FetchInput(char * finalMsg){
+int FetchInput(char * finalMsg){
     char g_rxBuffer[512];
 
     int rxIndex = 0;
@@ -80,6 +80,41 @@
     }
 
 
+}
+
+
+
+// Nonblociking
+int FetchInputNonBlocking(char * finalMsg){
+    char g_rxBuffer[512];
+
+    int rxIndex = 0;
+    char c;
+//    drawString(10, 60, "GOT MESSAGE!", WHITE, BLACK, 1);
+    while (UartCharsAvail()) {
+        c = UartCharGetNonBlocking();
+
+        if (c == '\0' || c == '\r' || c == '\n') {
+            if (rxIndex > 0) {
+                g_rxBuffer[rxIndex] = '\0';
+                strcpy(finalMsg, g_rxBuffer);
+                rxIndex = 0; // Reset for next time
+                return 1;    // Exit function with success
+            }
+            continue;
+        }
+
+        if (rxIndex < MAX_ESP_LENGTH - 1) {
+                    g_rxBuffer[rxIndex] = c;
+                    rxIndex++;
+        } else {
+            g_rxBuffer[rxIndex] = '\0';
+            strcpy(finalMsg, g_rxBuffer);
+            rxIndex = 0;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 int ProcessIncomingData(char *msg, CC3200_Data *data) {
@@ -158,4 +193,15 @@ int ProcessIncomingData(char *msg, CC3200_Data *data) {
         }
     }
     return -1;
+}
+
+
+int CheckStatus(char *msg) {
+    if (strncmp(msg, "ESP32CONNECTED", 14) == 0) {
+
+        return 0;
+    } else{
+        return -1;
+    }
+
 }

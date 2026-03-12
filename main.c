@@ -1,5 +1,6 @@
 // Standard includes
 #include <stdio.h>
+#include <stdbool.h>
 
 // Driverlib includes
 #include "hw_types.h"
@@ -201,7 +202,7 @@ main()
     // Display banner and usage message
     DisplayBanner();
 
-    SetupADCMic(ADC_SAMPLE_RATE);
+
 
     InitSystick();
 
@@ -219,7 +220,9 @@ main()
 
     fillScreen(BLACK);
 
-    StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
+
+
+    bool esp32_connected = false;
 
     uint8_t num_bins = 16;
     uint8_t gravity_shift = 4;
@@ -228,10 +231,16 @@ main()
     uint16_t color3 = 0x8010; // PURPLE
     uint16_t rate = 0;
 //    char rate[16];
+//
+//    if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
+//                  color1 = aws_data.c1;
+//                  color2 = aws_data.c2;
+//                  color3 = aws_data.c3;
+
   
 
     CC3200_Data aws_data = { num_bins, color1, color2, color3, gravity_shift, rate };
-
+    aws_data = aws_data;
 
     const char *pMsg = "GET_AWS\n";
     const char *t;
@@ -245,27 +254,43 @@ main()
 //    Uart1PutChar('\0');
     Message("Status: sent message to ESP32...\n\r");
 
-    while(1) {
-        MAP_UtilsDelay(1000);
-        if (FetchInput(GET_buffer)) {
-            // Once we have a string, parse it
-            if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
-                color1 = aws_data.c1;
-                color2 = aws_data.c2;
-                color3 = aws_data.c3;
+    int timeout_count = 0;
+    int max_timeout = 3000;
 
-                Report("SUCCESS!");
+
+    while(timeout_count < max_timeout) {
+        MAP_UtilsDelay(1000);
+        if (FetchInputNonBlocking(GET_buffer)) {
+            // Once we have a string, parse it
+            if ( CheckStatus(GET_buffer) == 0){
+
+                esp32_connected = true;
+                Report("ESP 32 connection checked and verified");
                 break; // End startup loop
             } else{
-                Report("FAILED TO GET MESSAGE");
+                Report("Unable to verify validity of esp32");
             }
         }
-        Report("Incorrect message, retrying");
+        MAP_UtilsDelay(80000 / 3);
+        timeout_count++;
+
+        if (timeout_count >= max_timeout) {
+            Report("TIMEOUT: ESP32 not responding. Using defaults.\n\r");
+        }
     }
 
     q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
+
+
     fillScreen(BLACK);
+
+    SetupADCMic(ADC_SAMPLE_RATE);
+    StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
+
+    if (esp32_connected){
+
+    }
 
 
     while(1)

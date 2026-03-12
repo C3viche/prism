@@ -1,6 +1,10 @@
 #ifndef AWS_PARSER_H
 #define AWS_PARSER_H
 
+
+
+
+
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
@@ -21,6 +25,8 @@ typedef struct {
 
 // Library Functions
 int FetchInput(char *finalMsg);
+int FetchInputNonBlocking(char * finalMsg);
 int ProcessIncomingData(char *msg, CC3200_Data *data);
+int CheckStatus(char *msg);
 
 #endif // AWS_PARSER_H
