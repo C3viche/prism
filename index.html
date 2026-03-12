@@ -1,162 +1,461 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prism | Real-Time Audio Visualizer</title>
-    <style>
-        /* CSS Variables for easy color tweaking */
-        :root {
-            --bg-color: #0d1117;
-            --text-color: #c9d1d9;
-            --accent-color: #00f2fe;
-            --accent-gradient: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
-            --card-bg: #161b22;
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Prism | Real-Time Audio Visualizer</title>
+        <style>
+            :root {
+                --bg-dark: #07090f;
+                --card-bg: rgba(22, 27, 34, 0.6);
+                --border-glow: rgba(0, 242, 254, 0.3);
+                --text-main: #e6edf3;
+                --text-muted: #8b949e;
+                --accent-cyan: #00f2fe;
+                --accent-pink: #ff007f;
+            }
+
+            body {
+                margin: 0;
+                font-family:
+                    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                    Helvetica, Arial, sans-serif;
+                background-color: var(--bg-dark);
+                color: var(--text-main);
+                line-height: 1.6;
+                background-image:
+                    radial-gradient(
+                        circle at 15% 50%,
+                        rgba(0, 242, 254, 0.05),
+                        transparent 25%
+                    ),
+                    radial-gradient(
+                        circle at 85% 30%,
+                        rgba(255, 0, 127, 0.05),
+                        transparent 25%
+                    );
+                background-attachment: fixed;
+            }
+
+            /* Navigation */
+            nav {
+                position: fixed;
+                top: 0;
+                width: 100%;
+                padding: 20px 40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                box-sizing: border-box;
+                background: rgba(7, 9, 15, 0.8);
+                backdrop-filter: blur(10px);
+                z-index: 1000;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            }
+
+            .logo {
+                font-weight: 800;
+                font-size: 1.2rem;
+                letter-spacing: 2px;
+            }
+
+            .repo-btn {
+                background: transparent;
+                color: var(--text-main);
+                text-decoration: none;
+                padding: 8px 16px;
+                border: 1px solid var(--text-muted);
+                border-radius: 6px;
+                transition: all 0.3s ease;
+            }
+
+            .repo-btn:hover {
+                border-color: var(--accent-cyan);
+                box-shadow: 0 0 10px var(--border-glow);
+                color: var(--accent-cyan);
+            }
+
+            /* Hero Section */
+            header {
+                text-align: center;
+                padding: 180px 20px 80px;
+            }
+
+            h1 {
+                font-size: 5rem;
+                margin: 0;
+                background: linear-gradient(
+                    45deg,
+                    var(--accent-pink),
+                    var(--accent-cyan)
+                );
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                letter-spacing: 4px;
+                font-weight: 900;
+            }
+
+            .subtitle {
+                font-size: 1.2rem;
+                color: var(--text-muted);
+                max-width: 600px;
+                margin: 20px auto;
+            }
+
+            /* Layout Containers */
+            .container {
+                max-width: 1100px;
+                margin: 0 auto;
+                padding: 0 20px;
+                display: flex;
+                flex-direction: column;
+                gap: 80px;
+            }
+
+            .section-title {
+                font-size: 2rem;
+                margin-bottom: 30px;
+                text-align: center;
+                font-weight: 600;
+            }
+
+            /* Demo Video */
+            .demo-section {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .demo-box {
+                width: 90%;
+                border-radius: 16px;
+                overflow: hidden;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+                background: #000;
+            }
+
+            video {
+                width: 100%;
+                display: block;
+            }
+
+            /* Documentation & Reproducibility */
+            .glass-card {
+                background: var(--card-bg);
+                backdrop-filter: blur(12px);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 16px;
+                padding: 40px;
+            }
+
+            .reproducibility-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                margin-top: 20px;
+            }
+
+            /* Interactive Hardware Grid */
+            .hardware-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(200px, 1fr));
+                gap: 20px;
+            }
+
+            .hw-item {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 20px;
+                text-align: center;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            }
+
+            .hw-item:hover {
+                border-color: var(--accent-cyan);
+                transform: translateY(-5px);
+                background: rgba(0, 242, 254, 0.05);
+            }
+
+            .hw-item .desc {
+                font-size: 0.85rem;
+                color: var(--text-muted);
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                margin-top: 10px;
+            }
+
+            .hw-item:hover .desc {
+                opacity: 1;
+            }
+
+            /* Architecture Image */
+            .arch-img {
+                width: 100%;
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+
+            /* AWS Cloud Section */
+            .aws-container {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 30px;
+                align-items: center;
+            }
+
+            .terminal {
+                background: #0d1117;
+                border-radius: 8px;
+                padding: 20px;
+                font-family: monospace;
+                font-size: 0.85rem;
+                color: #58a6ff;
+                border: 1px solid #30363d;
+                overflow-x: auto;
+                position: relative;
+            }
+
+            .terminal::before {
+                content: "AWS IoT Core Shadow State";
+                display: block;
+                color: var(--text-muted);
+                margin-bottom: 15px;
+                border-bottom: 1px solid #30363d;
+                padding-bottom: 10px;
+            }
+
+            .post-btn {
+                background: var(--accent-cyan);
+                color: #000;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 6px;
+                font-weight: bold;
+                cursor: pointer;
+                margin-top: 20px;
+                transition: transform 0.2s;
+            }
+
+            .post-btn:active {
+                transform: scale(0.95);
+            }
+
+            footer {
+                text-align: center;
+                padding: 40px;
+                margin-top: 80px;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                color: var(--text-muted);
+            }
+
+            @media (max-width: 768px) {
+                .reproducibility-grid,
+                .aws-container {
+                    grid-template-columns: 1fr;
+                }
+                h1 {
+                    font-size: 3rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <div class="logo">PRISM</div>
+            <a
+                href="https://github.com/C3viche/prism"
+                target="_blank"
+                class="repo-btn"
+                >View Repository</a
+            >
+        </nav>
+
+        <header>
+            <h1>PRISM</h1>
+            <div class="subtitle">
+                A High-Performance, Cloud-Connected Real-Time Audio Visualizer.
+                Built on the CC3200.
+            </div>
+        </header>
+
+        <div class="container">
+            <section class="demo-section">
+                <div class="demo-box">
+                    <video controls autoplay muted loop>
+                        <source src="prism_demo_cropped.mp4" type="video/mp4" />
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+            </section>
+
+            <section class="glass-card">
+                <h2
+                    class="section-title"
+                    style="text-align: left; margin-top: 0"
+                >
+                    Project Overview
+                </h2>
+                <p>
+                    Prism is an embedded audio spectrum analyzer that captures
+                    live audio, processes frequencies using hardware-accelerated
+                    math (ARM CMSIS-DSP), and maps sound magnitudes to an
+                    Adafruit OLED display in real-time. It features
+                    cloud-connectivity via AWS to dynamically update visualizer
+                    configurations on the fly.
+                </p>
+
+                <div class="reproducibility-grid">
+                    <div>
+                        <h3 style="color: var(--accent-cyan)">Documentation</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem">
+                            Our codebase is fully modularized. The FFT
+                            processing, DSP filtering (including custom noise
+                            gates and EMA gravity), and OLED SPI drawing
+                            routines are abstracted to allow easy configuration
+                            of bin counts, colors, and sample rates.
+                        </p>
+                    </div>
+                    <div>
+                        <h3 style="color: var(--accent-pink)">
+                            Reproducibility
+                        </h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem">
+                            To recreate Prism, flash the provided firmware to a
+                            CC3200 Launchpad. Connect the MAX9184 to ADC pin 60,
+                            the OLED via standard SPI pins, and configure your
+                            AWS IoT certificates in <code>aws_config.h</code>.
+                            See the repository <code>README.md</code> for
+                            schematic wiring.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">Hardware Architecture</h2>
+                <div class="hardware-grid">
+                    <div class="hw-item">
+                        <strong>TI CC3200</strong>
+                        <div class="desc">
+                            The core MCU. Handles FFT math, SPI/I2C
+                            communication, and logic.
+                        </div>
+                    </div>
+                    <div class="hw-item">
+                        <strong>MAX9184 Mic</strong>
+                        <div class="desc">
+                            Captures ambient audio with an internal amplifier.
+                        </div>
+                    </div>
+                    <div class="hw-item">
+                        <strong>ESP32-C5</strong>
+                        <div class="desc">
+                            Handles auxiliary Wi-Fi/Bluetooth communications via
+                            UART.
+                        </div>
+                    </div>
+                    <div class="hw-item">
+                        <strong>Adafruit OLED</strong>
+                        <div class="desc">
+                            1.5" RGB Display connected via high-speed SPI for
+                            rendering.
+                        </div>
+                    </div>
+                    <div class="hw-item">
+                        <strong>IR Receiver</strong>
+                        <div class="desc">
+                            Allows localized mode switching via GPIO interrupts.
+                        </div>
+                    </div>
+                    <div class="hw-item">
+                        <strong>RC Low Pass Filter</strong>
+                        <div class="desc">
+                            Hardware filtering to condition the analog audio
+                            signal before the ADC.
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="section-title">System Data Flow</h2>
+                <img
+                    src="prism_architecture.png"
+                    alt="System Architecture Diagram"
+                    class="arch-img"
+                />
+            </section>
+
+            <section class="glass-card">
+                <div class="aws-container">
+                    <div>
+                        <h2>Cloud Configuration via AWS</h2>
+                        <p style="color: var(--text-muted)">
+                            Prism is tethered to an AWS IoT Core endpoint. By
+                            modifying the Device Shadow State, we can send
+                            <strong>POST requests</strong> to remotely configure
+                            the visualizer without reflashing the firmware.
+                        </p>
+                        <p style="color: var(--text-muted)">
+                            Settings like <code>num_bars</code>,
+                            <code>gravity_shift</code>, and frequency band
+                            colors can be updated on the fly. The CC3200 polls
+                            these endpoints via HTTP/REST to fetch the latest
+                            desired state.
+                        </p>
+                        <button class="post-btn" onclick="simulatePost()">
+                            Simulate POST Request
+                        </button>
+                        <p
+                            id="post-status"
+                            style="
+                                color: #3fb950;
+                                font-size: 0.85rem;
+                                margin-top: 10px;
+                                display: none;
+                            "
+                        >
+                            ✓ Configuration updated successfully!
+                        </p>
+                    </div>
+
+                    <div class="terminal">
+                        <pre><code id="shadow-code" contenteditable="true" spellcheck="false" style="outline: none; transition: text-shadow 0.3s;">
+    {
+      "state": {
+        "desired": {
+          "num_bars": "12",
+          "color1": "BLUE",
+          "color2": "GREEN",
+          "color3": "BLACK",
+          "gravity_shift": "12",
+          "sampling_rate": "4000"
         }
-
-        body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        /* Hero Section */
-        header {
-            text-align: center;
-            padding: 100px 20px;
-            background: radial-gradient(circle at 50% -20%, #1a2a42, var(--bg-color) 60%);
-        }
-
-        h1 {
-            font-size: 4rem;
-            margin: 0;
-            background: -webkit-linear-gradient(45deg, #ff007f, #00f2fe);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: 2px;
-        }
-
-        .subtitle {
-            font-size: 1.5rem;
-            color: #8b949e;
-            margin-top: 10px;
-        }
-
-        /* Main Content Container */
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
-
-        /* Video/Image Demo Area */
-        .demo-box {
-            width: 100%;
-            height: 400px;
-            background-color: #000;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 50px;
-            border: 1px solid #30363d;
-            box-shadow: 0 10px 30px rgba(0, 242, 254, 0.1);
-        }
-
-        /* Features Grid */
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 50px;
-        }
-
-        .feature-card {
-            background-color: var(--card-bg);
-            padding: 30px;
-            border-radius: 12px;
-            border: 1px solid #30363d;
-            transition: transform 0.2s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent-color);
-        }
-
-        .feature-card h3 {
-            color: var(--accent-color);
-            margin-top: 0;
-        }
-
-        /* Tech Stack Section */
-        .tech-stack {
-            text-align: center;
-            padding: 40px;
-            background-color: var(--card-bg);
-            border-radius: 12px;
-        }
-
-        .tech-stack p {
-            font-family: monospace;
-            color: #8b949e;
-        }
-
-        /* Footer */
-        footer {
-            text-align: center;
-            padding: 40px 20px;
-            border-top: 1px solid #30363d;
-            margin-top: 50px;
-            color: #8b949e;
-        }
-    </style>
-</head>
-<body>
-
-    <header>
-        <h1>PRISM</h1>
-        <div class="subtitle">Real-Time Audio Visualization</div>
-    </header>
-
-    <div class="container">
-        
-        <div class="demo-box">
-            <p style="color: #484f58; font-style: italic;">[ Insert GIF/Video of LED strips reacting to music here ]</p>
+      }
+    }</code></pre>
+                    </div>
+                </div>
+            </section>
         </div>
 
-        <h2>System Architecture</h2>
-        <p>Prism is a high-performance audio spectrum analyzer built on the Texas Instruments CC3200 microcontroller. It captures live audio via a microphone, processes the frequencies using hardware-accelerated math, and maps the data to LED strips with custom gravity physics and color logic.</p>
+        <footer>
+            <p>
+                Designed and engineered by Cristian & Alex. Built for CSE 237.
+            </p>
+        </footer>
 
-        <div class="features">
-            <div class="feature-card">
-                <h3>⚡ Hardware-Accelerated FFT</h3>
-                <p>Utilizes the ARM CMSIS-DSP library to compute a 512-point Fast Fourier Transform. By sampling audio at precisely 16kHz via a hardware timer, the system achieves zero-latency frequency binning using optimized q15 fixed-point math.</p>
-            </div>
-            
-            <div class="feature-card">
-                <h3>🎛️ Custom DSP Pipeline</h3>
-                <p>Raw FFT data is passed through a custom Digital Signal Processing pipeline. This includes a DC blocker, a silence noise gate to prevent LED flicker, and an Exponential Moving Average (EMA) filter to give the falling LED bars a smooth, realistic "gravity" effect.</p>
-            </div>
-
-            <div class="feature-card">
-                <h3>🧭 Interactive Accelerometer</h3>
-                <p>The visualizer responds to physical orientation. By reading the CC3200's onboard BMA222 accelerometer via I2C, physical tilt is dynamically mapped to the HSV color space, allowing the user to seamlessly shift the hue of the LEDs just by tilting the board.</p>
-            </div>
-        </div>
-
-        <div class="tech-stack">
-            <h3>Tech Stack & Hardware</h3>
-            <p>TI CC3200 LaunchPad • C/C++ • Code Composer Studio • ARM CMSIS-DSP • I2C & SPI • WS2812B LEDs</p>
-        </div>
-
-    </div>
-
-    <footer>
-        <p>Designed and engineered by Cristian & Alex.</p>
-    </footer>
-
-</body>
+        <script>
+            function simulatePost() {
+                const status = document.getElementById("post-status");
+                status.style.display = "block";
+                setTimeout(() => {
+                    status.style.display = "none";
+                }, 3000);
+            }
+        </script>
+    </body>
 </html>
