@@ -309,7 +309,7 @@ void drawVerticalLines(unsigned int color) {
 
 /**************************************************************************/
 
-static void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
+static void DrawBars(size_t num_bars, q15_t* bin_peaks, uint16_t color1, uint16_t color2, uint16_t color3) {
 
     // Stores the Y-coordinate of the TOP of each bar from the previous frame.
     static uint8_t old_y_coords[MAX_POSSIBLE_BARS];
@@ -369,7 +369,7 @@ static void DrawBars(size_t num_bars, q15_t* bin_peaks, unsigned int color1, uns
 // Add the prototype so oled.c knows the function exists in Adafruit_OLED.c
 extern unsigned int Color565(unsigned char r, unsigned char g, unsigned char b);
 
-static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, unsigned int color2, unsigned int color3) {
+static void DrawWaves(size_t num_waves, q15_t* bin_peaks, uint16_t color1, uint16_t color2, uint16_t color3) {
     static uint8_t old_y_coords[MAX_POSSIBLE_BARS][OLED_DIM] = {0};
     int center = OLED_DIM / 2;
     int max_y = OLED_DIM - 1;
@@ -417,7 +417,7 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
     for (x = 0; x < OLED_DIM; x++) {
 
         // Yield for remote interrupt
-        ButtonPress(ChangeMode);
+        ButtonPress(ChangeMode); // TEMP CHANGE
         if (mode != WAVE) return;
 
         // ERASE PHASE
@@ -465,7 +465,7 @@ static void DrawWaves(size_t num_waves, q15_t* bin_peaks, unsigned int color1, u
     }
 }
 
-static void DrawPulse(size_t num_bins, q15_t* bin_peaks) {
+static void DrawPulse(size_t num_bins, q15_t* bin_peaks, uint16_t color1, uint16_t color2, uint16_t color3) {
     static uint8_t old_r_bass = 0, old_r_mid = 0, old_r_treble = 0;
 
         // Calculate Averages for the 3 Frequency Zones
@@ -505,23 +505,23 @@ static void DrawPulse(size_t num_bins, q15_t* bin_peaks) {
         if (old_r_mid != r_mid)       drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_mid, BLACK);
         if (old_r_treble != r_treble) drawCircle(OLED_DIM/2, OLED_DIM/2, old_r_treble, BLACK);
 
-        drawCircle(OLED_DIM/2, OLED_DIM/2, r_bass,   GREEN);
-        drawCircle(OLED_DIM/2, OLED_DIM/2, r_mid,    ORANGE);
-        drawCircle(OLED_DIM/2, OLED_DIM/2, r_treble, PURPLE);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_bass,   color1);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_mid,    color2);
+        drawCircle(OLED_DIM/2, OLED_DIM/2, r_treble, color3);
 
         old_r_bass = r_bass; old_r_mid = r_mid; old_r_treble = r_treble;
 }
 
-void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks) {
+void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks, uint16_t color1, uint16_t color2, uint16_t color3) {
     switch (mode) {
     case BAR:
-        DrawBars(num_bins, bin_peaks, GREEN, ORANGE, PURPLE);
+        DrawBars(num_bins, bin_peaks, color1, color2, color3);
         break;
     case WAVE:
-        DrawWaves(num_bins, bin_peaks, GREEN, ORANGE, PURPLE);
+        DrawWaves(num_bins, bin_peaks, color1, color2, color3);
         break;
     case PULSE:
-        DrawPulse(num_bins, bin_peaks);
+        DrawPulse(num_bins, bin_peaks, color1, color2, color3);
         break;
     default:
         Report("No mode selected. Cannot draw visuals\n\r");

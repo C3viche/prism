@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <inttypes.h>
 #include <string.h>
+#include <stdlib.h>
 
 // Driverlib includes
 #include "hw_types.h"
@@ -22,6 +23,7 @@
 
 
 #include "mic/adc_mic.h"
+#include "esp32/esp32_com.h"
 
 
 #include "uart_if.h"
@@ -47,9 +49,8 @@
 #define SYS_CLK 80000000
 
 
- int FetchInput(char * finalMsg){
+int FetchInput(char * finalMsg){
     char g_rxBuffer[512];
-    int MAX_ESP_LENGTH = 512;
 
     int rxIndex = 0;
     char c;
@@ -81,7 +82,42 @@
 
 }
 
-int ProcessIncomingData(char *msg) {
+
+
+// Nonblociking
+int FetchInputNonBlocking(char * finalMsg){
+    static char g_rxBuffer[512];
+
+    static int rxIndex = 0;
+    char c;
+//    drawString(10, 60, "GOT MESSAGE!", WHITE, BLACK, 1);
+    while (UartCharsAvail()) {
+        c = UartCharGetNonBlocking();
+
+        if (c == '\0' || c == '\r' || c == '\n') {
+            if (rxIndex > 0) {
+                g_rxBuffer[rxIndex] = '\0';
+                strcpy(finalMsg, g_rxBuffer);
+                rxIndex = 0; // Reset for next time
+                return 1;    // Exit function with success
+            }
+            continue;
+        }
+
+        if (rxIndex < MAX_ESP_LENGTH - 1) {
+                    g_rxBuffer[rxIndex] = c;
+                    rxIndex++;
+        } else {
+            g_rxBuffer[rxIndex] = '\0';
+            strcpy(finalMsg, g_rxBuffer);
+            rxIndex = 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int ProcessIncomingData(char *msg, CC3200_Data *data) {
     // Check for our specific header
     if (strncmp(msg, "DATA<", 5) == 0) {
         char *ptr = msg + 5; // Start after 'DATA<'
@@ -114,30 +150,56 @@ int ProcessIncomingData(char *msg) {
 
         // Apply only non-blank values to your system
         if (i == 6) {
-//            if (strlen(segments[0]) > 0) UpdateBars(segments[0]);
-//            if (strlen(segments[1]) > 0) UpdateColor1(segments[1]);
-//            if (strlen(segments[2]) > 0) UpdateColor2(segments[2]);
-//            if (strlen(segments[3]) > 0) UpdateColor3(segments[3]);
-//            if (strlen(segments[4]) > 0) UpdateGravity(segments[4]);
-//            if (strlen(segments[5]) > 0) UpdateRate(segments[5]);
             char statusReport[128] = "Update Summary: ";
 
-            // Process each and append a quick code to the report string
-            // [B]=Bars, [C]=Colors, [G]=Gravity, [R]=Rate
-            // An uppercase letter means Updated, lowercase or dot means Skipped
+            // BARS (String)
+            if (strlen(segments[0]) > 0) {
+                data->bars = (uint8_t)strtoul(segments[0], NULL, 10);
+                strcat(statusReport, "Bars ");
+            }
 
-            if (strlen(segments[0]) > 0) {      strcat(statusReport, segments[0]); }
-            if (strlen(segments[1]) > 0) {    strcat(statusReport, segments[1]); }
-            if (strlen(segments[2]) > 0) {    strcat(statusReport, segments[2]); }
-            if (strlen(segments[3]) > 0) {   strcat(statusReport, segments[3]); }
-            if (strlen(segments[4]) > 0) {   strcat(statusReport, segments[4]); }
-            if (strlen(segments[5]) > 0) {     strcat(statusReport, segments[5]); }
+            // COLORS (Hex to Uint16)
+            if (strlen(segments[1]) > 0) {
+                data->c1 = (uint16_t)strtoul(segments[1], NULL, 16);
+                strcat(statusReport, "C1 ");
+            }
+            if (strlen(segments[2]) > 0) {
+                data->c2 = (uint16_t)strtoul(segments[2], NULL, 16);
+                strcat(statusReport, "C2 ");
+            }
+            if (strlen(segments[3]) > 0) {
+                data->c3 = (uint16_t)strtoul(segments[3], NULL, 16);
+                strcat(statusReport, "C3 ");
+            }
+
+            // GRAVITY (String)
+            if (strlen(segments[4]) > 0) {
+                data->grav = (uint8_t)strtoul(segments[4], NULL, 10);
+                strcat(statusReport, "Grav ");
+            }
+
+            // RATE (String)
+            if (strlen(segments[5]) > 0) {
+//                strncpy(data->rate, segments[5], 15);
+                data->rate = (uint16_t) 12;
+            }
 
             // Final consolidated report
             Report("\n\r%s - OK\n\r", statusReport);
-            Report("Parsing Complete. Non-blank fields updated.\n\r");
+            Report("Parsed Hex Colors: C1:0x%04X, C2:0x%04X, C3:0x%04X\n\r", data->c1, data->c2, data->c3);
             return 0;
         }
     }
     return -1;
+}
+
+
+int CheckStatus(char *msg) {
+    if (strncmp(msg, "ESPCON", 6) == 0) {
+
+        return 0;
+    } else{
+        return -1;
+    }
+
 }

@@ -1,5 +1,6 @@
 // Standard includes
 #include <stdio.h>
+#include <stdbool.h>
 
 // Driverlib includes
 #include "hw_types.h"
@@ -49,6 +50,29 @@ extern void (* const g_pfnVectors[])(void);
 extern uVectorEntry __vector_table;
 #endif
 
+
+volatile bool esp32_connected = false;
+volatile bool g_timeout_reached = true;
+
+uint16_t color1 = 0x07E0; // GREEN
+uint16_t color2 = 0xFD20; // ORANGE
+uint16_t color3 = 0x8010; // PURPLE
+uint8_t num_bins = 16;
+uint8_t gravity_shift = 4;
+
+
+
+static const uint16_t color_palette[] = {
+     RED, GREEN, BLUE,
+     CYAN, MAGENTA, YELLOW,
+     ORANGE, PINK, PURPLE,
+     LIME, NAVY, TEAL,
+     WHITE, GREY, BLACK
+ };
+
+#define NUM_COLORS (sizeof(color_palette) / sizeof(color_palette[0]))
+
+
 q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
 q15_t audio_inputs[FFT_SIZE];            // Raw ADC microphone readings
 
@@ -72,8 +96,22 @@ DisplayBanner()
     Report("\n\n\n\r");
 }
 
-static void
-InitSPI(void) {
+
+
+
+uint16_t GetNextColor(void) {
+    static int color_index = 0; // Remembers its value between calls
+
+    uint16_t selected_color = color_palette[color_index];
+
+    // Move to the next index, or wrap back to 0 if at the end
+    color_index = (color_index + 1) % NUM_COLORS;
+
+    return selected_color;
+}
+
+
+static void InitSPI(void) {
 
     //
     // Enable the SPI module clock
@@ -119,8 +157,55 @@ static void InitUart(){
                            UART_CONFIG_PAR_NONE));
 }
 
+
+void TimerTimeoutHandler(void) {
+    // Clear the interrupt flag so it doesn't fire again immediately
+    MAP_TimerIntClear(TIMERA0_BASE, TIMER_TIMA_TIMEOUT);
+
+    // Set our software flag
+    g_timeout_reached = true;
+
+    // Disable the timer so it doesn't keep running
+    MAP_TimerDisable(TIMERA0_BASE, TIMER_A);
+
+    Report("TIMER HANDLER \n");
+}
+
+
+void StartTimeoutTimer(unsigned long msecs) {
+    // Enable the peripheral clock
+    MAP_PRCMPeripheralClkEnable(PRCM_TIMERA0, PRCM_RUN_MODE_CLK);
+    MAP_PRCMPeripheralReset(PRCM_TIMERA0);
+
+    // Configure as a one-shot 32-bit timer
+    MAP_TimerConfigure(TIMERA0_BASE, TIMER_CFG_ONE_SHOT);
+
+    // Load the 2-second value (80Mhz * seconds)
+    MAP_TimerLoadSet(TIMERA0_BASE, TIMER_A, 80000000 * (msecs / 1000));
+
+    // Register the interrupt handler
+    MAP_TimerIntRegister(TIMERA0_BASE, TIMER_A, TimerTimeoutHandler);
+
+    // Enable the timeout interrupt
+    MAP_TimerIntEnable(TIMERA0_BASE, TIMER_TIMA_TIMEOUT);
+
+    // Start the timer
+    MAP_TimerEnable(TIMERA0_BASE, TIMER_A);
+
+    Report("Started Timer \n");
+}
+
+
+void FormatAWSMessage(char *dest, int size, uint8_t bars, uint16_t c1, uint16_t c2, uint16_t c3, uint8_t grav, uint16_t rate) {
+
+    // snprintf ensures we don't exceed the 'size' of the destination buffer
+    // %u is for unsigned int, %04X prints hex with 4 digits (e.g., 0x07E0)
+    snprintf(dest, size, "SEND_AWS <%u, 0x%04X, 0x%04X, 0x%04X, %u, %u>\n",
+             bars, c1, c2, c3, grav, rate);
+}
+
 void
-ChangeMode(char c) {
+ChangeMode(char c ) {
     switch (c) {
     case '1':
         mode = BAR;
@@ -137,6 +222,92 @@ ChangeMode(char c) {
         fillScreen(BLACK);
         Report("Mode is now PULSE\n\r");
         break;
+    case '4':
+        // GET request to load configuration
+        if (esp32_connected){
+
+           Report("AWS Data Processing\n");
+           const char *pMsg = "GET_AWS\n";
+           const char *t;
+
+           for (t = pMsg; *t != '\0'; t++) {
+                      Uart1PutChar(*t);
+              }
+
+           char GET_buffer[512];
+
+           // Copy current colors
+           uint16_t c1 = color1 ; // GREEN
+           uint16_t c2 = color2; // ORANGE
+           uint16_t c3 = color3; // PURPLE
+
+           uint16_t rate = 0;
+
+           CC3200_Data aws_data = { num_bins, c1, c2, c3, gravity_shift, rate };
+           g_timeout_reached = false;
+           StartTimeoutTimer(10000);
+           while(!g_timeout_reached) {
+
+               // Check uART
+               if (MAP_UARTCharsAvail(UART1BASE)) {
+                    Report("."); // Heartbeat to show UART is alive
+               }
+
+
+               if (FetchInputNonBlocking(GET_buffer)) {
+                   Report("Raw String Received: [%s]\n", GET_buffer);
+
+                   if (ProcessIncomingData(GET_buffer, &aws_data) == 0){
+                       Report("AWS Data received\n");
+                         color1 = aws_data.c1;
+                         color2 = aws_data.c2;
+                         color3 = aws_data.c3;
+                         num_bins = aws_data.bars;
+                         gravity_shift = aws_data.grav;
+
+
+
+                         // Full reset of samples
+                         memset(g_ping, 0, sizeof(g_ping));
+                         memset(g_pong, 0, sizeof(g_pong));
+                         StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
+
+                       MAP_TimerDisable(TIMERA0_BASE, TIMER_A);
+                       break;
+                   } else {
+                       Report("Invalid Data received\n");
+                   }
+               }
+           }
+        }
+       break;
+    case '5':
+        // POST request to save current configuration
+
+        break;
+    case '7':
+            // POST request to save current configuration
+            color1 = GetNextColor();
+            break;
+    case '8':
+            // POST request to save current configuration
+            color2 = GetNextColor();
+            break;
+    case '9':
+          // POST request to save current configuration
+            color3 = GetNextColor();
+          break;
+    case '-': {
+        char SEND_buffer[512];
+        FormatAWSMessage(SEND_buffer, 512,  num_bins, color1, color2, color3, gravity_shift, 400);
+        const char *t;
+
+        for (t = SEND_buffer; *t != '\0'; t++) {
+                  Uart1PutChar(*t);
+          }
+        break;
+    }
+
     default:
         break;
     }
@@ -182,6 +353,7 @@ BoardInit(void)
 int
 main()
 {
+
     // Initialize Board configurations
     BoardInit();
 
@@ -194,7 +366,7 @@ main()
     // Display banner and usage message
     DisplayBanner();
 
-    SetupADCMic(ADC_SAMPLE_RATE);
+
 
     InitSystick();
 
@@ -204,19 +376,29 @@ main()
     // Set up SPI for communications with OLED
     InitSPI();
 
-
-    // Start up Uart
     MAP_UtilsDelay(80000000);
+    // Start up Uart
     InitUart();
 
 
     fillScreen(BLACK);
 
-    StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
 
 
+     esp32_connected = false;
 
-    const char *pMsg = "GET_AWS\n";
+//    uint16_t rate = 0;
+//    char rate[16];
+//
+//    if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
+//                  color1 = aws_data.c1;
+//                  color2 = aws_data.c2;
+//                  color3 = aws_data.c3;
+
+  
+
+//    const char *pMsg = "GET_AWS\n";
+    const char *pMsg = "STATUS\n";
     const char *t;
 
     char GET_buffer[512];
@@ -228,27 +410,40 @@ main()
 //    Uart1PutChar('\0');
     Message("Status: sent message to ESP32...\n\r");
 
-    while(1) {
-        MAP_UtilsDelay(1000);
-        if (FetchInput(GET_buffer)) {
+    int timeout_count = 0;
+    int max_timeout = 30000;
+
+
+    while(timeout_count < max_timeout) {
+//        MAP_UtilsDelay(1000);
+        if (FetchInputNonBlocking(GET_buffer)) {
+            Report("Got something \n");
             // Once we have a string, parse it
-            int status = ProcessIncomingData(GET_buffer);
-            if (status == 0){
-                Report("SUCCESS!");
-                break;
+            if ( CheckStatus(GET_buffer) == 0){
+                ;
+                esp32_connected = true;
+                Report("ESP 32 connection checked and verified \n");
+                break; // End startup loop
             } else{
-                Report("FAILED TO GET MESSAGE");
+                Report("Unable to verify validity of esp32");
             }
         }
-        Report("Incorrect message, retrying");
+        MAP_UtilsDelay(8000 / 3);
+        timeout_count++;
+
+        if (timeout_count >= max_timeout) {
+            Report("TIMEOUT: ESP32 not responding. Using defaults.\n\r");
+        }
     }
 
-
-    // Set up the bars and peaks here beforse the loop
-    uint8_t num_bins = 16;
     q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
+
+
     fillScreen(BLACK);
+
+    SetupADCMic(ADC_SAMPLE_RATE);
+    StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
 
 
     while(1)
@@ -257,41 +452,22 @@ main()
 
         int readyBuffer = CheckBufferReady();
         if (readyBuffer == BUFFER_PING) {
-            ProcessAudioFrame(g_ping, frequency_magnitudes);
+            ProcessAudioFrame(g_ping, frequency_magnitudes, gravity_shift);
             BinPeaks(frequency_magnitudes, num_bins, bin_peaks);
 
-            DrawVisuals(mode, num_bins, bin_peaks);
+            DrawVisuals(mode, num_bins, bin_peaks, color1, color2, color3);
             ClearBufferFlag(BUFFER_PING);
         }
         else if (readyBuffer == BUFFER_PONG) {
-            ProcessAudioFrame(g_pong, frequency_magnitudes);
+            ProcessAudioFrame(g_pong, frequency_magnitudes, gravity_shift);
             BinPeaks(frequency_magnitudes, num_bins, bin_peaks);
 
-            DrawVisuals(mode, num_bins, bin_peaks);
+            DrawVisuals(mode, num_bins, bin_peaks, color1, color2, color3);
             ClearBufferFlag(BUFFER_PONG);
         }
         else if (readyBuffer == -1){
             ClearOverrunFlag();
         }
-
-
-//        if (frame_ready) {
-//
-//            // The buffer is full. Process the FFT_SIZE number of samples.
-//            // Populates `frequency_magnitudes` with scaled/processed magnitudes for different frequencies
-//            ProcessAudioFrame(audio_inputs, frequency_magnitudes);
-//
-//            // Separate peaks into different bins and populate `bin_peaks`
-//            BinPeaks(frequency_magnitudes, num_bars, bin_peaks);
-//
-//            // TODO: Update LED drawing here based on different modes
-//             DrawVisual(mode, bin_peaks)
-//
-//
-//            // Reset the index and lower the flag so the interrupt starts filling it again
-//            sample_index = 0;
-//            frame_ready = false;
-//        }
 
     }
 }
