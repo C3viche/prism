@@ -35,18 +35,18 @@ static volatile uint8_t  g_bSoftwareOverrun = 0; // Buffer 1 not processed befor
 void ADCIntHandler() {
     uint32_t ulStatus;
 
-    ulStatus = MAP_ADCIntStatus(ADC_BASE, ADC_CH_1);
-    MAP_ADCIntClear(ADC_BASE, ADC_CH_1, ulStatus);
+    ulStatus = MAP_ADCIntStatus(ADC_BASE, ADC_CH_3);
+    MAP_ADCIntClear(ADC_BASE, ADC_CH_3, ulStatus);
     // Check for hardware FIFO overflow
 
 
-//    MAP_ADCIntClear(ADC_BASE, ADC_CH_1);
+//    MAP_ADCIntClear(ADC_BASE, ADC_CH_3);
 
     if ((g_activeBuffer == 0 && g_bPingReady) || (g_activeBuffer == 1 && g_bPongReady)) {
         g_bSoftwareOverrun = 1; // New flag: CPU is too slow!
 
         // This clears the hardware flag so we don't get trapped in an infinite loop!
-        MAP_ADCFIFORead(ADC_BASE, ADC_CH_1);
+        MAP_ADCFIFORead(ADC_BASE, ADC_CH_3);
 
         return; // Drop this sample to avoid corrupting the buffer being read by FFT
     }
@@ -56,7 +56,7 @@ void ADCIntHandler() {
 
     if (pCurrent != 0 && g_uiCount < g_uiSize) {
         // Read sample: Shifted right by 2 per CC3200 specs (12-bit value)
-        pCurrent[g_uiCount] = (q15_t)((MAP_ADCFIFORead(ADC_BASE, ADC_CH_1) >> 2) & 0x0FFF);
+        pCurrent[g_uiCount] = (q15_t)((MAP_ADCFIFORead(ADC_BASE, ADC_CH_3) >> 2) & 0x0FFF);
         g_uiCount++;
 
         // Window is full! Swap buffers immediately
@@ -90,7 +90,7 @@ void SetupADCMic(uint32_t sampleRate) {
     //  Enable Clocks and Peripheral
     MAP_PRCMPeripheralClkEnable(PRCM_ADC, PRCM_RUN_MODE_CLK);
     MAP_ADCEnable(ADC_BASE);
-    MAP_ADCChannelEnable(ADC_BASE, ADC_CH_1);
+    MAP_ADCChannelEnable(ADC_BASE, ADC_CH_3);
 
     //  Calculate Timing
 //    uiClockFreq = SYS_CLK_FREQ:
@@ -117,7 +117,7 @@ void SetupADCMic(uint32_t sampleRate) {
     // 4. Final Configuration
     MAP_ADCTimerConfig(ADC_BASE, uiTimerTicks);
     Report("Status: Fixing Base...\n\r");
-    MAP_ADCIntRegister(ADC_BASE, ADC_CH_1, ADCIntHandler);
+    MAP_ADCIntRegister(ADC_BASE, ADC_CH_3, ADCIntHandler);
     Report("Status: Setting priority...\n\r");
     MAP_IntPrioritySet(INT_ADCCH1, 0x20);
     Report("--------------------------------------\n\r\n\r");
@@ -137,7 +137,7 @@ void StartADCSampling(q15_t *ping_buffer, q15_t *pong_buffer, uint32_t window_si
     g_bPongReady = 0;
     g_bOverrunOccurred = 0;
 
-    MAP_ADCIntEnable(ADC_BASE, ADC_CH_1, ADC_FIFO_FULL | ADC_FIFO_OVERFLOW);
+    MAP_ADCIntEnable(ADC_BASE, ADC_CH_3, ADC_FIFO_FULL | ADC_FIFO_OVERFLOW);
     MAP_ADCTimerEnable(ADC_BASE);
 }
 

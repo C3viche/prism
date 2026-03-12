@@ -75,7 +75,9 @@ void PinMuxConfig(void)
     PRCMPeripheralClkEnable(PRCM_GPIOA3, PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_GSPI,   PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_UARTA0, PRCM_RUN_MODE_CLK);
+    PRCMPeripheralClkEnable(PRCM_UARTA1, PRCM_RUN_MODE_CLK);
     PRCMPeripheralClkEnable(PRCM_ADC, PRCM_RUN_MODE_CLK);
+    PRCMPeripheralReset(PRCM_UARTA1); // Hotfix for UART 1
 
     //
     // Configure PIN_64 for GPIO Output
@@ -121,11 +123,12 @@ void PinMuxConfig(void)
     //
     //*****************************************************************************
 
+
     //
-    // Configure PIN_60 for GPIO Output (RESET)
+    // Configure PIN_04 for GPIO Input (Reset)
     //
-    PinTypeGPIO(PIN_60, PIN_MODE_0, false);
-    GPIODirModeSet(GPIOA0_BASE, 0x20, GPIO_DIR_MODE_OUT);
+    PinTypeGPIO(PIN_04, PIN_MODE_0, false);
+    GPIODirModeSet(GPIOA1_BASE, 0x20, GPIO_DIR_MODE_OUT);
 
     //
     // Configure PIN_61 for GPIO Output (OLEDCS)
@@ -174,23 +177,19 @@ void PinMuxConfig(void)
     //
     //*****************************************************************************
 
-    //
-    // Configure PIN_04 for GPIO Input (SW3)
-    //
-    PinTypeGPIO(PIN_04, PIN_MODE_0, false);
-    GPIODirModeSet(GPIOA1_BASE, 0x20, GPIO_DIR_MODE_IN);
+
 
     //
     // Configure PIN_15 for GPIO Input (SW2)
     //
-    PinTypeGPIO(PIN_15, PIN_MODE_0, false);
-    GPIODirModeSet(GPIOA2_BASE, 0x40, GPIO_DIR_MODE_IN);
-
-    //
-    // Configure PIN_18 for GPIO Output
-    //
-    PinTypeGPIO(PIN_18, PIN_MODE_0, false);
-    GPIODirModeSet(GPIOA3_BASE, 0x10, GPIO_DIR_MODE_OUT);
+//    PinTypeGPIO(PIN_15, PIN_MODE_0, false);
+//    GPIODirModeSet(GPIOA2_BASE, 0x40, GPIO_DIR_MODE_IN);
+//
+//    //
+//    // Configure PIN_18 for GPIO Output
+//    //
+//    PinTypeGPIO(PIN_18, PIN_MODE_0, false);
+//    GPIODirModeSet(GPIOA3_BASE, 0x10, GPIO_DIR_MODE_OUT);
 
 
     //*****************************************************************************
@@ -203,5 +202,23 @@ void PinMuxConfig(void)
     // Configure PIN_58 for ADC_CH1 (MAX9814 Analog Out)
     //
 
-    PinTypeADC(PIN_58, PIN_MODE_255);
+    //    PinTypeADC(PIN_58, PIN_MODE_255);
+
+    // CRITICAL
+    PinTypeADC(PIN_60, PIN_MODE_255);
+
+
+    //*****************************************************************************
+    //
+    //  Microphone Pins
+    //
+    //*****************************************************************************
+    // Configure PIN_58 for UART1 UART1_TX
+    //
+    PinTypeUART(PIN_58, PIN_MODE_6);
+
+    //
+    // Configure PIN_59 for UART1 UART1_RX
+    //
+    PinTypeUART(PIN_59, PIN_MODE_6);
 }
