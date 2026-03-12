@@ -154,8 +154,7 @@ int ProcessIncomingData(char *msg, CC3200_Data *data) {
 
             // BARS (String)
             if (strlen(segments[0]) > 0) {
-                strncpy(data->bars, segments[0], 15);
-                data->bars[15] = '\0'; // Safety null terminator
+                data->bars = (uint8_t)strtoul(segments[0], NULL, 10);
                 strcat(statusReport, "Bars ");
             }
 
@@ -175,8 +174,7 @@ int ProcessIncomingData(char *msg, CC3200_Data *data) {
 
             // GRAVITY (String)
             if (strlen(segments[4]) > 0) {
-                strncpy(data->grav, segments[4], 15);
-                data->grav[15] = '\0';
+                data->grav = (uint8_t)strtoul(segments[4], NULL, 10);
                 strcat(statusReport, "Grav ");
             }
 

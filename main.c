@@ -58,6 +58,9 @@ volatile bool g_timeout_reached = true;
  uint16_t color2 = 0xFD20; // ORANGE
  uint16_t color3 = 0x8010; // PURPLE
 
+ uint8_t num_bins = 16;
+ uint8_t gravity_shift = 4;
+
 q15_t frequency_magnitudes[FFT_SIZE/2];  // The final, usable volume levels for the display
 q15_t audio_inputs[FFT_SIZE];            // Raw ADC microphone readings
 
@@ -230,6 +233,10 @@ ChangeMode(char c ) {
                          color1 = aws_data.c1;
                          color2 = aws_data.c2;
                          color3 = aws_data.c3;
+                         num_bins = aws_data.bars;
+                         gravity_shift = aws_data.grav;
+
+
 
                          // Full reset of samples
                          memset(g_ping, 0, sizeof(g_ping));
@@ -327,9 +334,7 @@ main()
 
      esp32_connected = false;
 
-    uint8_t num_bins = 16;
-    uint8_t gravity_shift = 4;
-    uint16_t rate = 0;
+//    uint16_t rate = 0;
 //    char rate[16];
 //
 //    if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
@@ -338,9 +343,6 @@ main()
 //                  color3 = aws_data.c3;
 
   
-
-    CC3200_Data aws_data = { num_bins, color1, color2, color3, gravity_shift, rate };
-    aws_data = aws_data;
 
 //    const char *pMsg = "GET_AWS\n";
     const char *pMsg = "STATUS\n";
