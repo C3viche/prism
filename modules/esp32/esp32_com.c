@@ -51,7 +51,6 @@
 
  int FetchInput(char * finalMsg){
     char g_rxBuffer[512];
-    int MAX_ESP_LENGTH = 512;
 
     int rxIndex = 0;
     char c;
@@ -148,9 +147,8 @@ int ProcessIncomingData(char *msg, CC3200_Data *data) {
 
             // RATE (String)
             if (strlen(segments[5]) > 0) {
-                strncpy(data->rate, segments[5], 15);
-                data->rate[15] = '\0';
-                strcat(statusReport, "Rate ");
+//                strncpy(data->rate, segments[5], 15);
+                data->rate = (uint16_t) 12;
             }
 
             // Final consolidated report
