@@ -16,9 +16,7 @@
 // A silence filter to prevent the visualizer from detecting background humming and buzzing
 #define NOISE_THRESHOLD 10 // We will probably change this later
 
-#define GRAVITY_SHIFT 4 // This is the temporal filter speed decay for smooth falling bars/waves, etc
-
-void ApplyDSPFilters(q15_t* current_magnitudes, uint16_t size);
+void ApplyDSPFilters(q15_t* current_magnitudes, uint16_t size, uint8_t gravity_shift);
 
 
 #endif /* MODULES_DSP_DSP_FILTERING_H_ */

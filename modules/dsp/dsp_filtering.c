@@ -10,7 +10,7 @@
 static q15_t previous_magnitudes[FFT_SIZE] = {0};
 
 void
-ApplyDSPFilters(q15_t* current_magnitudes, uint16_t size) {
+ApplyDSPFilters(q15_t* current_magnitudes, uint16_t size, uint8_t gravity_shift) {
     // DC Voltage blocking
     current_magnitudes[0] = 0;
 
@@ -34,10 +34,10 @@ ApplyDSPFilters(q15_t* current_magnitudes, uint16_t size) {
         }
         // If the new beat is quieter, slowly let the old bar fall down (Gravity)
         else {
-            uint8_t dynamic_shift = GRAVITY_SHIFT; // Base is 4 (falls by 1/16th)
+            uint8_t dynamic_shift = gravity_shift; // Base is 4 (falls by 1/16th)
 
-            if (i > (BASS * size)) dynamic_shift = GRAVITY_SHIFT + 1; // Mids fall by 1/32nd
-            if (i > (MID * size)) dynamic_shift = GRAVITY_SHIFT + 2; // Treble falls by 1/64th
+            if (i > (BASS * size)) dynamic_shift = gravity_shift + 1; // Mids fall by 1/32nd
+            if (i > (MID * size)) dynamic_shift = gravity_shift + 2; // Treble falls by 1/64th
 
             // Calculate decay step
             int16_t decay = (previous_magnitudes[i] >> dynamic_shift);

@@ -64,7 +64,7 @@ ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
 }
 
 void
-ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2]) {
+ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2], uint8_t gravity_shift) {
     // Prepare the microphone data for FFT to silence
 
     // Remove the DC Offset. If your ADC idles at 2048 (half of a 12-bit range),
@@ -93,7 +93,7 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
     ApplyPreEmphasis(frequency_magnitudes);
 
     // Apply the DSP filtering to smoothen out sound ranges
-    ApplyDSPFilters(frequency_magnitudes, FFT_SIZE / 2);
+    ApplyDSPFilters(frequency_magnitudes, FFT_SIZE / 2, gravity_shift);
 
     // Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
     ScaleMagnitudes(frequency_magnitudes);

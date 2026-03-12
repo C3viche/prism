@@ -137,6 +137,12 @@ ChangeMode(char c) {
         fillScreen(BLACK);
         Report("Mode is now PULSE\n\r");
         break;
+    case '4':
+        // GET request to load configuration
+        break;
+    case '5':
+        // POST request to save current configuration
+        break;
     default:
         break;
     }
@@ -215,6 +221,13 @@ main()
 
     StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
 
+    uint8_t num_bins = 16;
+    uint8_t gravity_shift = 4;
+    uint16_t color1 = 0x07E0; // GREEN
+    uint16_t color2 = 0xFD20; // ORANGE
+    uint16_t color3 = 0x8010; // PURPLE
+    char rate[16];
+  
     CC3200_Data cc3200_data = {
         num_bins,
         gravity_shift,
@@ -251,9 +264,6 @@ main()
         Report("Incorrect message, retrying");
     }
 
-
-    // Set up the bars and peaks here beforse the loop
-    uint8_t num_bins = 16;
     q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
     fillScreen(BLACK);
@@ -265,41 +275,22 @@ main()
 
         int readyBuffer = CheckBufferReady();
         if (readyBuffer == BUFFER_PING) {
-            ProcessAudioFrame(g_ping, frequency_magnitudes);
+            ProcessAudioFrame(g_ping, frequency_magnitudes, gravity_shift);
             BinPeaks(frequency_magnitudes, num_bins, bin_peaks);
 
-            DrawVisuals(mode, num_bins, bin_peaks);
+            DrawVisuals(mode, num_bins, bin_peaks, color1, color2, color3);
             ClearBufferFlag(BUFFER_PING);
         }
         else if (readyBuffer == BUFFER_PONG) {
-            ProcessAudioFrame(g_pong, frequency_magnitudes);
+            ProcessAudioFrame(g_pong, frequency_magnitudes, gravity_shift);
             BinPeaks(frequency_magnitudes, num_bins, bin_peaks);
 
-            DrawVisuals(mode, num_bins, bin_peaks);
+            DrawVisuals(mode, num_bins, bin_peaks, color1, color2, color3);
             ClearBufferFlag(BUFFER_PONG);
         }
         else if (readyBuffer == -1){
             ClearOverrunFlag();
         }
-
-
-//        if (frame_ready) {
-//
-//            // The buffer is full. Process the FFT_SIZE number of samples.
-//            // Populates `frequency_magnitudes` with scaled/processed magnitudes for different frequencies
-//            ProcessAudioFrame(audio_inputs, frequency_magnitudes);
-//
-//            // Separate peaks into different bins and populate `bin_peaks`
-//            BinPeaks(frequency_magnitudes, num_bars, bin_peaks);
-//
-//            // TODO: Update LED drawing here based on different modes
-//             DrawVisual(mode, bin_peaks)
-//
-//
-//            // Reset the index and lower the flag so the interrupt starts filling it again
-//            sample_index = 0;
-//            frame_ready = false;
-//        }
 
     }
 }
