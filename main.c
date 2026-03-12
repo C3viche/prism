@@ -125,6 +125,12 @@ ChangeMode(char c) {
         fillScreen(BLACK);
         Report("Mode is now PULSE\n\r");
         break;
+    case '4':
+        // GET request to load configuration
+        break;
+    case '5':
+        // POST request to save current configuration
+        break;
     default:
         break;
     }

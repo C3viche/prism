@@ -102,6 +102,12 @@ Decode(int mask) {
     else if (mask == 0x4302) {
         c = '3';
     }
+    else if (mask == 0x4082) {
+        c = '4';
+    }
+    else if (mask == 0x4282) {
+        c = '5';
+    }
     else {
         c = '?'; // No pair matched
     }
