@@ -73,24 +73,3 @@ BinPeaks(q15_t* frequency_magnitudes, uint8_t num_bars, q15_t* bin_peaks) {
 
     }
 }
-
-
-
-//for (int bar = 0; bar < current_num_bars; bar++) {
-//
-//    // 1. BASS (Roughly the first 30% of your bars)
-//    if (bar < (current_num_bars * 0.3)) {
-//        draw_led_column(bar, height, COLOR_RED);
-//    }
-//    // 2. MIDS (The middle 40% of your bars)
-//    else if (bar < (current_num_bars * 0.7)) {
-//        draw_led_column(bar, height, COLOR_GREEN);
-//    }
-//    // 3. TREBLE (The last 30% of your bars)
-//    else {
-//        draw_led_column(bar, height, COLOR_BLUE);
-//    }
-//}
-
-
-

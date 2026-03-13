@@ -180,7 +180,6 @@ int ProcessIncomingData(char *msg, CC3200_Data *data) {
 
             // RATE (String)
             if (strlen(segments[5]) > 0) {
-//                strncpy(data->rate, segments[5], 15);
                 data->rate = (uint16_t) 12;
             }
 

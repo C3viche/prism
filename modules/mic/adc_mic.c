@@ -13,8 +13,6 @@
 #include "utils.h"
 #include "uart.h"
 
-
-
 #define SYS_CLK_FREQ 80000000
 
 // Pointers to the two user-provided windows
@@ -39,9 +37,6 @@ void ADCIntHandler() {
     MAP_ADCIntClear(ADC_BASE, ADC_CH_3, ulStatus);
     // Check for hardware FIFO overflow
 
-
-//    MAP_ADCIntClear(ADC_BASE, ADC_CH_3);
-
     if ((g_activeBuffer == 0 && g_bPingReady) || (g_activeBuffer == 1 && g_bPongReady)) {
         g_bSoftwareOverrun = 1; // New flag: CPU is too slow!
 
@@ -59,7 +54,7 @@ void ADCIntHandler() {
         pCurrent[g_uiCount] = (q15_t)((MAP_ADCFIFORead(ADC_BASE, ADC_CH_3) >> 2) & 0x0FFF);
         g_uiCount++;
 
-        // Window is full! Swap buffers immediately
+        // Window is full so swap the buffers immediately
         if (g_uiCount >= g_uiSize) {
             if (g_activeBuffer == 0) {
                 g_bPingReady = 1;
@@ -70,7 +65,6 @@ void ADCIntHandler() {
             }
             g_uiCount = 0; // Reset index for the new buffer
 
-            // LOGIC OVERRUN CHECK:
             // If we just filled Ping, but Pong is STILL marked as ready,
             // it means the main loop is too slow and hasn't processed Pong yet.
             if ((g_activeBuffer == 1 && g_bPongReady) || (g_activeBuffer == 0 && g_bPingReady)) {
@@ -83,7 +77,6 @@ void ADCIntHandler() {
 
 // RUNS THE CONFIGURATION
 void SetupADCMic(uint32_t sampleRate) {
-//    uint32_t uiClockFreq;
     uint32_t uiTimerTicks;
     uint32_t uiActualSampleRate;
 
@@ -92,8 +85,6 @@ void SetupADCMic(uint32_t sampleRate) {
     MAP_ADCEnable(ADC_BASE);
     MAP_ADCChannelEnable(ADC_BASE, ADC_CH_3);
 
-    //  Calculate Timing
-//    uiClockFreq = SYS_CLK_FREQ:
     uiTimerTicks = SYS_CLK_FREQ / sampleRate;
 
     // Calculate actual resulting frequency (to see rounding error)

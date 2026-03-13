@@ -64,7 +64,3 @@ ApplyDSPFilters(q15_t* current_magnitudes, uint16_t size, uint8_t gravity_shift)
 
 
 }
-
-
-
-

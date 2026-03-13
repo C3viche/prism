@@ -281,10 +281,6 @@ ChangeMode(char c ) {
            }
         }
        break;
-    case '5':
-        // POST request to save current configuration
-
-        break;
     case '7':
             // POST request to save current configuration
             color1 = GetNextColor();
@@ -333,9 +329,9 @@ BoardInit(void)
     //
     // Set vector table base
     //
-//#if defined(ccs)
+
     MAP_IntVTableBaseSet((unsigned long)&g_pfnVectors[0]);
-//#endif
+
 #if defined(ewarm)
     MAP_IntVTableBaseSet((unsigned long)&__vector_table);
 #endif
@@ -366,8 +362,7 @@ main()
     // Display banner and usage message
     DisplayBanner();
 
-
-
+    // Initialize systick timer for periodic tasks
     InitSystick();
 
     // Initialize all the Fast Fourier Transform stuff
@@ -380,24 +375,11 @@ main()
     // Start up Uart
     InitUart();
 
-
+    // Clear the screen
     fillScreen(BLACK);
 
+    esp32_connected = false;
 
-
-     esp32_connected = false;
-
-//    uint16_t rate = 0;
-//    char rate[16];
-//
-//    if ( ProcessIncomingData(GET_buffer, &aws_data) == 0){
-//                  color1 = aws_data.c1;
-//                  color2 = aws_data.c2;
-//                  color3 = aws_data.c3;
-
-  
-
-//    const char *pMsg = "GET_AWS\n";
     const char *pMsg = "STATUS\n";
     const char *t;
 
@@ -405,17 +387,13 @@ main()
 
     for (t = pMsg; *t != '\0'; t++) {
             Uart1PutChar(*t);
-//        Report("CHARACTER: %c ", *t);
     }
-//    Uart1PutChar('\0');
     Message("Status: sent message to ESP32...\n\r");
 
     int timeout_count = 0;
     int max_timeout = 30000;
 
-
     while(timeout_count < max_timeout) {
-//        MAP_UtilsDelay(1000);
         if (FetchInputNonBlocking(GET_buffer)) {
             Report("Got something \n");
             // Once we have a string, parse it
@@ -438,19 +416,19 @@ main()
 
     q15_t bin_peaks[MAX_POSSIBLE_BARS] = {0}; // we will only use up to `num_bars` though
 
-
-
     fillScreen(BLACK);
 
     SetupADCMic(ADC_SAMPLE_RATE);
     StartADCSampling(g_ping, g_pong, WINDOW_SIZE);
 
-
+    // The main loop for processing audio frames and updating visuals
     while(1)
     {
         ButtonPress(ChangeMode);
 
         int readyBuffer = CheckBufferReady();
+
+        // Ping pong buffer to make sure audio sampling doesn't overwrite data while being processed
         if (readyBuffer == BUFFER_PING) {
             ProcessAudioFrame(g_ping, frequency_magnitudes, gravity_shift);
             BinPeaks(frequency_magnitudes, num_bins, bin_peaks);
@@ -471,10 +449,3 @@ main()
 
     }
 }
-
-//    q15_t sample_peaks[16] = {
-//        120, 115, 90, 60,  // Deep Bass (Bars 0-3)
-//        40,  30,  25, 20,  // Low Mids (Bars 4-7)
-//        15,  12,  10, 10,  // High Mids (Bars 8-11)
-//        8,   5,   5,  10   // Treble (Bars 12-15)
-//    };

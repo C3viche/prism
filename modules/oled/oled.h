@@ -63,12 +63,7 @@
 // The factor to make the pulse amplitude bigger
 #define PULSE_BOOST 80
 
-// Custom functions
-void drawFontTable(int x, int y, unsigned int color, unsigned int bg, unsigned char size);
-void drawString(int x, int y, char *str, unsigned int color, unsigned int bg, unsigned char size);
-void drawHorizontalLines(unsigned int color);
-void drawVerticalLines(unsigned int color);
-
+// Handles each visual dynamically based on the mode and bin peaks
 void DrawVisuals(mode_t mode, size_t num_bins, q15_t* bin_peaks, uint16_t color1, uint16_t color2, uint16_t color3);
 
 #endif /* OLED_OLED_TEST_H_ */

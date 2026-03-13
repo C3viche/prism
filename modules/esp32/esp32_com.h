@@ -1,10 +1,6 @@
 #ifndef AWS_PARSER_H
 #define AWS_PARSER_H
 
-
-
-
-
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>

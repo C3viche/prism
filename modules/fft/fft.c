@@ -63,11 +63,11 @@ ScaleMagnitudes(q15_t frequency_magnitudes[FFT_SIZE/2]) {
     }
 }
 
+// Process an audio frame through the FFT algorithm and calculate frequency magnitudes
 void
 ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SIZE/2], uint8_t gravity_shift) {
-    // Prepare the microphone data for FFT to silence
 
-    // Remove the DC Offset. If your ADC idles at 2048 (half of a 12-bit range),
+    // Remove the DC Offset. If ADC idles at 2048 (half of a 12-bit range),
     // subtract 2048 from every sample.
     int i;
     for (i = 0; i < FFT_SIZE; i++) {
@@ -84,11 +84,6 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
     // of a Real FFT is just a mirror image of the first half.
     arm_cmplx_mag_q15(fft_output, frequency_magnitudes, FFT_SIZE / 2);
 
-    // Calculate ranges based on ADC sampling rate (probably 16 kHz to 20 kHz)
-    // frequency_magnitudes[0] is 0Hz (DC) noise. Ignore it.
-    // frequency_magnitudes[1] up to ~10 might be heavy bass frequencies.
-    // frequency_magnitudes[200+] could be high treble.
-
     // Boost the raw treble so it survives the noise gate
     ApplyPreEmphasis(frequency_magnitudes);
 
@@ -98,7 +93,4 @@ ProcessAudioFrame(q15_t audio_input[FFT_SIZE], q15_t frequency_magnitudes[FFT_SI
     // Find accurate maximum for magnitudes --> and make it a proportion of OLED_DIM
     ScaleMagnitudes(frequency_magnitudes);
 
-
 }
-
-
