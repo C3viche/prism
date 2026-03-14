@@ -127,7 +127,8 @@
             }
 
             .demo-box {
-                width: 90%;
+                max-width: 900px;
+                width: 100%;
                 border-radius: 16px;
                 overflow: hidden;
                 border: 1px solid rgba(255, 255, 255, 0.1);
@@ -328,15 +329,25 @@
                             CC3200 Launchpad. Connect the MAX9184 to ADC pin 60,
                             the OLED via standard SPI pins, and configure your
                             AWS IoT certificates in <code>aws_config.h</code>.
-                            See the repository <code>README.md</code> for
-                            schematic wiring.
+                            See the schematic wiring diagram below for detailed
+                            pin connections.
                         </p>
                     </div>
                 </div>
             </section>
 
             <section>
-                <h2 class="section-title">Hardware Architecture</h2>
+                <h2 class="section-title">Hardware Architecture & Wiring</h2>
+                <div
+                    class="glass-card"
+                    style="margin-bottom: 40px; padding: 20px"
+                >
+                    <img
+                        src="circuit_diagram.png"
+                        alt="Hardware Circuit Diagram"
+                        class="arch-img"
+                    />
+                </div>
                 <div class="hardware-grid">
                     <div class="hw-item">
                         <strong>TI CC3200</strong>
@@ -388,6 +399,19 @@
                     alt="System Architecture Diagram"
                     class="arch-img"
                 />
+            </section>
+
+            <section class="demo-section">
+                <h2 class="section-title">Real-Time Performance</h2>
+                <div class="demo-box">
+                    <video controls autoplay muted loop>
+                        <source
+                            src="prism_demo_video_cropped.mp4"
+                            type="video/mp4"
+                        />
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
             </section>
 
             <section class="glass-card">
